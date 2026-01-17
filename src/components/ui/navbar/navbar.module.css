@@ -1,0 +1,247 @@
+.navbar {
+  width: 100%;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem;
+  background: var(--container-colour);
+  border-bottom: 1px solid var(--container-border-colour);
+  color: var(--text-colour);
+  max-width: 100vw;
+  gap: 30px;
+  height: fit-content;
+  padding: 1rem 1rem;
+}
+
+
+.navbar > * 
+{
+    height: 33px;
+}
+
+.spacer
+{
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 25px;
+}
+
+.searchWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.search {
+  padding: 0.5rem 2rem 0.5rem 0.5rem; /* leave space for icon */
+  font-size: 1rem;
+}
+
+.icon {
+  position: absolute;
+  right: 0.5rem;
+  pointer-events: none; /* lets clicks go to the input */
+  color: var(--container-border-colour);
+}
+
+/* LEFT SIDE */
+.left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo {
+  height: 28px;
+  margin-right: 10px;
+  filter: brightness(0) invert(1);
+  cursor: pointer;
+}
+
+
+.repoInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.repoInfo a {
+  text-decoration: none;
+  font-weight: 500;
+  color: var(--accent-colour);
+}
+
+.repoInfo a:hover {
+  text-decoration: underline;
+}
+
+/* RIGHT SIDE */
+.right {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+/* SEARCH BAR */
+.searchWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 250px; /* adjust as needed */
+}
+
+.search {
+  width: 100%;
+  padding: 0.4rem 2.5rem 0.4rem 0.75rem; /* extra space on right for icon */
+  height: 100%;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--container-border-colour);
+  background: transparent;
+  color: var(--text-colour);
+  font-size: 1rem;
+  outline: none;
+  flex: 1;
+  transition: border 0.2s ease;
+}
+
+.search.active
+{
+    border-bottom: 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-color: var(--accent-colour);
+}
+
+.searchIcon {
+  position: absolute;
+  right: 0.75rem;
+  pointer-events: none; 
+  color: var(--text-colour);
+}
+
+.search:focus {
+  border: 1px solid var(--accent-colour);
+}
+
+.search.active:focus {
+  border-bottom: 0;
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-weight: 500;
+  margin-right: 15px;
+  color: var(--accent-colour);
+}
+
+.user span
+{
+  max-width: 155px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--border-radius);
+  background-color: var(--container-colour);
+  border: 1px solid var(--container-border-colour);
+}
+
+.searchDropdown {
+  position: absolute;
+  top: 100%; /* directly below input */
+  left: 0;
+  width: 100%;
+  max-height: 250px; /* optional: scroll if many items */
+  overflow-y: auto;
+  background: var(--container-colour);
+  border: 1px solid var(--accent-colour);
+  border-top: none; /* looks like it's part of input */
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+  z-index: 1000;
+  padding-top: 5px;
+
+}
+
+.searchItem
+{
+    color: var(--text-colour);
+    font-size: 0.7rem;
+    margin-left: 15px;
+    cursor: pointer;
+}
+
+.notFound
+{
+    color: #ee7c7e;
+    font-size: 0.7rem;
+    margin-left: 15px;
+}
+
+.searchItem:hover
+{
+    color: var(--accent-colour);
+}
+
+/* DROPDOWN ITEM */
+.searchDropdownItem {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.2s ease;
+  font-size: 0.875rem;
+  color: var(--text-colour);
+}
+
+.searchDropdownItem:hover {
+  background: var(--container-hover-background);
+}
+
+.githubLogo
+{
+  width: auto;
+  height: 100%;
+  color: var(--primary-btn-color);
+}
+
+.logInButton
+{
+  height: fit-content !important;
+}
+
+@media (max-width: 1130px) {
+  .spacer
+  {
+    display: none;
+  }
+
+  .user
+  {
+    margin-right: 0;
+  }
+}
+
+@media (max-width: 850px) {
+  .repoInfo
+  {
+    display: none;
+  }
+
+}
+
+@media (max-width: 535px) {
+  .user span
+  {
+    display: none;
+  }
+}

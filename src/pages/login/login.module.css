@@ -1,0 +1,60 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  font-family: sans-serif;
+  width: 100%;
+  flex: 1;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+.buttonErrorContainer
+{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.buttonErrorContainer p
+{
+  text-wrap: wrap;
+}
+
+.loginContainer
+{
+  background-color: var(--container-colour);
+  border: 1px solid var(--container-border-colour);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  max-width: 900px;
+}
+
+.title {
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.githubBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background-color: var(--secondary-container-colour);
+  color: var(--text-colour);
+  border: none;
+  margin-top: 20px;
+  padding: 0.75rem 1.5rem;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  padding-left: 15px;
+  border: 1px solid var(--container-border-colour);
+}
+
+.githubLogo {
+  width: 24px;
+  height: 24px;
+  color: var(--text-colour);
+}

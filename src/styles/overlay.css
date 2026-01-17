@@ -1,0 +1,88 @@
+/* overlay.css */
+
+.overlay-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100lvh;
+  background: rgba(0, 0, 0, 0.843);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 2rem;
+}
+
+.overlay-content {
+  background: var(--container-colour);
+  border: 1px solid var(--container-border-colour);
+  border-radius: var(--border-radius);
+  padding: 3rem 2.5rem;
+  width: 80vw;
+  padding-bottom: 2rem;
+  max-width: 90%;
+  box-sizing: border-box;
+  max-height: 95%;
+  overflow-y: auto;
+}
+
+.overlay-content form
+{
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-top: 20px;
+}
+
+.overlay-content input,
+.overlay-content textarea,
+.overlay-content select
+{
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: var(--border-radius);
+    background-color: var(--secondary-container-colour);
+    color: var(--text-colour);
+    font-size: 1rem;
+    font-family: "HeaderFont";
+}
+
+.overlay-loading {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-self: flex-start;
+  gap: 10px;
+  justify-content: center;
+}
+
+.overlay-loading svg
+{
+    margin: auto;
+}
+
+@media (max-width: 730px) {
+  .overlay-backdrop
+  {
+    padding: 1rem !important;
+  }
+  .overlay-content
+  {
+    width: 95%;
+    max-height: 90%;
+  }
+}
+
+@media (max-width: 525px) {
+  .overlay-content
+  {
+    width: 98%;
+    max-height: 98%;
+  }
+}

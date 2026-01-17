@@ -1,0 +1,12 @@
+.dashboard
+{
+  width: 100%;
+}
+
+.headerContainer
+{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}

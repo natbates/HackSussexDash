@@ -1,0 +1,93 @@
+.manager {
+  border: 1px solid var(--secondary-btn-border);;
+  padding: 1.2rem;
+  margin-bottom: 2rem;
+  margin-top: 13px;
+}
+
+.controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  height: 28px;
+}
+
+.search {
+  flex: 1;
+  padding: 0.4rem;
+  background-color: transparent;
+  outline: 1px solid var(--container-border-colour);
+}
+
+.select {
+  padding: 0.4rem;
+}
+
+.section {
+  margin-bottom: 1.5rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  padding: 0.4rem 0;
+  margin-bottom: 10px;
+  }
+
+.rowContainer
+{
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.line
+{
+    flex: 1;
+    margin: 0 10px;
+    height: 1px;
+    background-color: var(--secondary-btn-border);
+}
+
+.sectionTop
+{
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+    margin-bottom: 10px;
+    align-items: flex-start;
+}
+
+.sectionTop h3
+{
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+}
+
+.searchContainer
+{
+    width: 100%;
+    display: flex;
+    gap: 10px;
+}
+
+.actions {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.add {
+  margin-bottom: 0.5rem;
+}
+
+.pagination {
+  margin-top: 1rem;
+  display: flex;
+  gap: 10px;
+}
+
+.pagination button {
+  padding: 0.4rem 0.75rem;
+}

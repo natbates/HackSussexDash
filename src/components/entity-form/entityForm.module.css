@@ -1,0 +1,104 @@
+.form {
+  border: 1px solid #ddd;
+  padding: 1rem;
+  background: var(--background-colour);
+  width: 100%;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0.75rem;
+}
+
+.previewImage {
+  max-width: 200px;
+  display: block;
+  margin-top: 0.5rem;
+  outline: 1px solid var(--container-border-colour);
+  margin-bottom: 8px;
+}
+
+.field label {
+  font-weight: 600;
+  margin-top: 0.6rem;
+}
+
+.field input,
+.field textarea,
+.field select {
+  margin-top: 8px;
+  padding: 0.8rem 1rem;
+  font-size: 0.95rem;
+  min-height: 10px;
+  background-color: transparent;
+  color: var(--text-colour);
+  border: 1px solid var(--secondary-btn-border);
+
+}
+
+.error {
+  color: #c00;
+  font-size: 0.8rem;
+}
+
+.buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.buttons button {
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+}
+
+.singleton
+{
+  border: none;
+  padding: 0;
+}
+
+
+.repeatableItem {
+  margin-bottom: 0.75rem;
+  background: var(--secondary-background);
+}
+
+.subField {
+  margin-bottom: 0.5rem;
+}
+
+.repeatableSubItem {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.repeatableSubItem button
+{
+  margin-top: auto;
+}
+
+.subSubField {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.dayHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.dayActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.addDayButton {
+  margin-top: 1rem;
+}
