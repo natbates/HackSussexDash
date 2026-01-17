@@ -167,24 +167,31 @@ export default function EntityManager({ config, refreshKey }) {
         <select
           className="secondary"
           key={filter.field}
-          value={filters[filter.field] ?? ""}
+          value={filters[filter.field] === true ? "true" : filters[filter.field] === false ? "false" : ""}
           onChange={(e) => {
+            let filterValue = e.target.value;
+            if (e.target.value !== "") {
+              if (filter.field === "pastCommittee") {
+                filterValue = e.target.value === "true";
+              }
+            }
             setFilters((f) => ({
               ...f,
-              [filter.field]: e.target.value
+              [filter.field]: filterValue
             }));
             setVisibleCount({});
           }}
         >
           <option value="">All {filter.label}</option>
-            {filter.options.map((opt) => {
-              const value = typeof opt === "string" ? opt : opt?.name ?? "";
-              return (
-                <option key={value} value={value}>
-                  {value}
-                </option>
-              );
-            })}
+          {filter.options.map((opt) => {
+            const value = typeof opt === "boolean" ? (opt ? "true" : "false") : String(opt);
+            const display = typeof opt === "boolean" ? (opt ? "Yes" : "No") : String(opt);
+            return (
+              <option key={value} value={value}>
+                {display}
+              </option>
+            );
+          })}
         </select>
       ))}
 
