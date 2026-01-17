@@ -87,6 +87,7 @@ button
     background: var(--primary-btn-bg);
     text-wrap: nowrap;
     border: none;
+    color: black;
     border-radius: var(--border-radius);
     padding: 0.5rem 1rem;
     font-size: 1rem;
@@ -101,13 +102,6 @@ button:disabled {
     color: rgba(0, 0, 0, 0.616);
 }
 
-.primaryBtn {
-  background: var(--primary-btn-bg);
-  border: none;
-  color: var(--primary-btn-color);
-  font-weight: lighter;
-  transition: background 0.2s;
-}
 
 button:not(:disabled):hover
 {
