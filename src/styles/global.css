@@ -95,6 +95,12 @@ button
     height: 100%;
 }
 
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.8;
+    color: rgba(0, 0, 0, 0.616);
+}
+
 .primaryBtn {
   background: var(--primary-btn-bg);
   border: none;
@@ -103,7 +109,7 @@ button
   transition: background 0.2s;
 }
 
-button:hover 
+button:not(:disabled):hover
 {
   color: var(--text-colour);
   background-color: var(--accent-colour);
@@ -112,11 +118,6 @@ button:hover
 .secondaryBtn:hover {
   background: var(--accent-colour);
   color: white;
-}
-
-.primaryBtn:disabled, .secondaryBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .themeBtn {

@@ -61,9 +61,9 @@ const Navbar = () => {
         </div>)}
 
         {loading ? (
-          <button className={"primaryBtn"}>Logging in...</button>
+          <button className={styles.logInButton}>Logging in...</button>
         ) : user ? (
-          <button className={"primaryBtn"} onClick={logout} style={{height: "100%"}}>Logout</button>
+          <button className={styles.logInButton} onClick={logout}>Logout</button>
         ) : (
         <button className={styles.logInButton} onClick={handleLogin}>Log In</button>)}
       </div>
