@@ -9,7 +9,8 @@
   display: flex;
   gap: 1rem;
   margin-bottom: 1.5rem;
-  height: 28px;
+  height: fit-content;
+  flex-wrap: wrap;
 }
 
 .search {
@@ -70,7 +71,9 @@
 {
     width: 100%;
     display: flex;
-    gap: 10px;
+    gap: 10px;;
+    max-width: 600px;
+    margin-right: auto;
 }
 
 .actions {
