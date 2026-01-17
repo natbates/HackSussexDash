@@ -7,12 +7,21 @@ import {
 
 const ROLE_OPTIONS = [
     "President",
-    "Web Dev",
+    "Web development",
     "Social Media",
     "Designer",
+    "Graphic Design",
+    "Head of Media",
+    "Secretary",
+    "Competitive Programming",
+    "Media production",
+    "Welfare",
+    "Finance",
+    "General Committee",
     "Mentor",
     "Other"
 ];
+
 
 export default {
     file: "src/config/committee.json",
