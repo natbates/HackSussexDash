@@ -177,11 +177,14 @@ export default function EntityManager({ config, refreshKey }) {
           }}
         >
           <option value="">All {filter.label}</option>
-          {filter.options.map((opt) => (
-            <option key={String(opt)} value={opt}>
-              {String(opt)}
-            </option>
-          ))}
+            {filter.options.map((opt) => {
+              const value = typeof opt === "string" ? opt : opt?.name ?? "";
+              return (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              );
+            })}
         </select>
       ))}
 
