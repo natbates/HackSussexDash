@@ -198,14 +198,6 @@ button:not(:disabled):hover
     padding: 2rem;
 }
 
-.loading-container
-{
-    display: flex;
-    height: 100%;
-    align-items: center;
-    justify-content: center;
-}
-
 .back-arrow-container
 {
     display: flex;

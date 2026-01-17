@@ -47,7 +47,7 @@ export default function EntityManager({ config, refreshKey }) {
   const [filters, setFilters] = useState({});
   const [visibleCount, setVisibleCount] = useState({});
 
-  if (loading) return <LoadingScreen />;
+  if (loading || true) return <LoadingScreen />;
   if (!data) return <p>No data</p>;
 
   const matchesSearch = (item) => {
