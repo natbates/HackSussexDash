@@ -56,9 +56,9 @@
 {
     display: flex;
     justify-content: space-between;
-    flex-direction: column;
+    flex-direction: row;
     margin-bottom: 10px;
-    align-items: flex-start;
+    align-items: center;
 }
 
 .sectionTop h3
