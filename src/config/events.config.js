@@ -53,6 +53,12 @@ export default {
             label: "Event Logo",
             type: "file",
             accept: "image/*"
+        },
+
+        {
+            name: "sponsors",
+            label: "Sponsors",
+            type: "multiSelect"
         }
     ],
 

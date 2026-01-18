@@ -18,7 +18,6 @@ const ROLE_OPTIONS = [
     "Welfare",
     "Finance",
     "General Committee",
-    "Mentor",
     "Other"
 ];
 

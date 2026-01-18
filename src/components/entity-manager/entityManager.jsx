@@ -167,7 +167,12 @@ export default function EntityManager({ config, refreshKey }) {
         <select
           className="secondary"
           key={filter.field}
-          value={filters[filter.field] === true ? "true" : filters[filter.field] === false ? "false" : ""}
+          value={(() => {
+            const val = filters[filter.field];
+            if (val === true) return "true";
+            if (val === false) return "false";
+            return val ?? "";
+          })()}
           onChange={(e) => {
             let filterValue = e.target.value;
             if (e.target.value !== "") {

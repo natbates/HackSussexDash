@@ -4,6 +4,7 @@
   background: var(--background-colour);
   width: 100%;
   margin-bottom: 15px;
+  position: relative;
 }
 
 .field {
@@ -78,6 +79,14 @@
   margin-bottom: 10px;
 }
 
+.repeatableSubItem div
+{
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+
 .repeatableSubItem button
 {
   margin-top: auto;
@@ -101,6 +110,44 @@
   gap: 0.5rem;
 }
 
-.addDayButton {
-  margin-top: 1rem;
+.multiSelect {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 10px;
+}
+
+.multiSelect button {
+  padding: 0.5rem;
+  border: 1px solid var(--secondary-btn-border);
+  background: transparent;
+  cursor: pointer;
+  color: white;
+}
+
+.multiSelect button:hover {
+  color: white;
+}
+
+.multiSelect button.selected {
+  background: var(--accent-colour);
+}
+
+.loadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+@media (max-width: 865px) {
+  .repeatableSubItem {
+    flex-direction: column;
+  }
 }
