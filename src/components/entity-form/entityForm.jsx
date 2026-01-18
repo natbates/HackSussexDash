@@ -360,10 +360,14 @@ export default function EntityForm({
 
       {/* -------- BUTTONS -------- */}
       <div className={styles.buttons}>
-        <button onClick={handleCancel} disabled={submitting}>Cancel</button>
-        <button onClick={revert} disabled={!hasChanges || submitting}>
-          Revert
-        </button>
+        {(!isSingleton) && (
+          <button onClick={handleCancel} disabled={submitting}>Cancel</button>
+        )}
+        {(isEditing || isSingleton) && (
+          <button onClick={revert} disabled={!hasChanges || submitting}>
+            Revert
+          </button>
+        )}
         <button onClick={submit} disabled={!hasChanges || submitting}>
           Save
         </button>
