@@ -40,6 +40,7 @@ const LoginPage = () => {
       try {
         const valid = await login(storedToken);
         if (valid) {
+          setErrorMsg(null); // ✅ Clear any existing error on success
           const redirectPath = localStorage.getItem("redirect_after_login") || "/dashboard";
           localStorage.removeItem("redirect_after_login");
           console.log("redirecting from here");
@@ -72,6 +73,8 @@ const LoginPage = () => {
     localStorage.removeItem("gh_token");
     logout();
     setErrorMsg(null);
+    // Clear location state to prevent error from persisting
+    navigate(location.pathname, { replace: true, state: {} });
 
     window.location.href = githubAuthUrl;
   };
