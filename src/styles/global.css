@@ -250,11 +250,11 @@ select, input, textarea {
     padding: 0.5rem 1rem;
     font-size: 1rem;
     border-radius: var(--border-radius);
-    cursor: pointer;
     font-family: "HeaderFont";
 }
 
 select {
+  cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
