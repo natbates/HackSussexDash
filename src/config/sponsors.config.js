@@ -6,14 +6,14 @@ export default {
     imagePath: "public/config_images/sponsors",
 
     fields: [
-        { name: "name", label: "Name" },
+        { name: "name", label: "Name", required: true },
         { name: "website", label: "Website" },
-        { name: "logoUrl", label: "Logo", type: "file" }
+        { name: "logoUrl", label: "Logo", type: "file", required: true }
     ],
 
     searchFields: ["name"],
 
-    filters: [], // no filters for now, can add later
+    filters: [],
 
     validation: {
         name: isNonEmptyString,

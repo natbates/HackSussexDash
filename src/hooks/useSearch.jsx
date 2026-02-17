@@ -1,10 +1,6 @@
 import { useState, useEffect } from "react";
 import useFetchData from "./useFetchData";
 
-/**
- * useSearch - Custom hook to fetch multiple datasets and provide search functionality
- * @returns {Object} { searchResults, setSearchTerm, loading, error }
- */
 const useSearch = () => {
 
   const { data: eventsData, loading: eventsLoading, errorMsg: eventsError } = useFetchData("events.json");

@@ -31,20 +31,23 @@ export default {
     fields: [
         {
             name: "name",
-            label: "Name"
+            label: "Name",
+            required: true
         },
 
         {
             name: "role",
             label: "Role",
             type: "select",
-            options: ROLE_OPTIONS
+            options: ROLE_OPTIONS,
+            required: true
         },
 
         {
             name: "image",
             label: "Image",
-            type: "file"
+            type: "file",
+            required: true
         },
 
         {

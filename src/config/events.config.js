@@ -23,23 +23,24 @@ export default {
     ],
 
     fields: [
-        { name: "title", label: "Title" },
+        { name: "title", label: "Title", required: true },
 
-        { name: "date", label: "Date", type: "date" },
+        { name: "date", label: "Date", type: "date", required: true },
 
         { name: "location", label: "Location" },
 
         {
             name: "description",
             label: "Description",
-            type: "textarea"
+            type: "textarea",
         },
 
         {
             name: "eventType",
             label: "Event Type",
             type: "select",
-            options: EVENT_TYPES
+            options: EVENT_TYPES,
+            required: true
         },
 
         {
@@ -52,7 +53,8 @@ export default {
             name: "logo",
             label: "Event Logo",
             type: "file",
-            accept: "image/*"
+            accept: "image/*",
+            required: true
         },
 
         {
@@ -119,6 +121,5 @@ export default {
         description: isNonEmptyString,
         eventType: isNonEmptyString,
         ticketsLink: isUrl
-        // logo validated via upload success, not isUrl
     }
 };

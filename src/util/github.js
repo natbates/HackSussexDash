@@ -1,110 +1,177 @@
-// githubWrite.js
 
 export async function writeJsonFile(token, repo, path, updatedData) {
+    if (!token) {
+        console.error("writeJsonFile called without a GitHub token");
+        return { error: "No GitHub token provided" };
+    }
+    if (!repo || !path || !updatedData) {
+        console.error("writeJsonFile missing parameters:", { repo, path, updatedData });
+        return { error: "Missing repo, path, or data" };
+    }
+
     try {
         const url = `https://api.github.com/repos/${repo}/contents/${path}`;
-        let sha = null;
+        let sha = undefined;
 
         try {
-            const fileRes = await fetch(url, {
-                headers: { Authorization: `token ${token}` }
+            const getRes = await fetch(url, {
+                headers: { Authorization: `token ${token}`, Accept: "application/vnd.github+json" },
             });
-            if (fileRes.ok) {
-                const fileData = await fileRes.json();
-                sha = fileData.sha;
+            if (getRes.ok) {
+                const getData = await getRes.json();
+                sha = getData.sha;
+            } else if (getRes.status === 404) {
+            } else {
+                const errText = await getRes.text();
+                console.warn(`writeJsonFile: Unexpected response checking ${path}: ${getRes.status} - ${errText}`);
             }
         } catch (err) {
+            console.warn(`writeJsonFile: Error checking existing file at ${path}:`, err);
         }
 
         const content = btoa(unescape(encodeURIComponent(JSON.stringify(updatedData, null, 2))));
-
         const putRes = await fetch(url, {
             method: "PUT",
             headers: {
                 Authorization: `token ${token}`,
-                "Content-Type": "application/json"
+                Accept: "application/vnd.github+json",
+                "Content-Type": "application/json",
             },
             body: JSON.stringify({
                 message: `${sha ? "Update" : "Create"} ${path}`,
                 content,
-                sha: sha || undefined
-            })
+                sha: sha || undefined,
+            }),
         });
 
         if (!putRes.ok) {
             const errText = await putRes.text();
-            throw new Error(`Failed to write file: ${putRes.status} ${putRes.statusText} - ${errText}`);
+            console.error(`writeJsonFile failed for ${path}: ${putRes.status} ${putRes.statusText} - ${errText}`);
+            return { error: `Failed to write JSON: ${putRes.status} ${putRes.statusText} - ${errText}` };
         }
 
-        return await putRes.json();
+        const result = await putRes.json();
+        return result;
     } catch (err) {
-        console.error("writeJsonFile error:", err);
+        console.error("writeJsonFile unexpected error:", err);
         return { error: err.message };
     }
 }
 
 export async function writeFile(token, repo, path, base64Content) {
+    if (!token) {
+        console.error("writeFile called without a GitHub token");
+        return { error: "No GitHub token provided" };
+    }
+    if (!repo || !path || !base64Content) {
+        console.error("writeFile missing parameters:", { repo, path, base64Content });
+        return { error: "Missing repo, path, or content" };
+    }
+
     try {
         const url = `https://api.github.com/repos/${repo}/contents/${path}`;
-        let sha = null;
+        let sha = undefined;
 
         try {
-            const res = await fetch(url, {
-                headers: { Authorization: `token ${token}` }
+            const getRes = await fetch(url, {
+                headers: { Authorization: `token ${token}`, Accept: "application/vnd.github+json" },
             });
-            if (res.ok) {
-                const data = await res.json();
-                sha = data.sha;
+            if (getRes.ok) {
+                const getData = await getRes.json();
+                sha = getData.sha;
+            } else if (getRes.status === 404) {
+                console.error(`writeFile: No existing file at ${path}, will create new.`);
+            } else {
+                const errText = await getRes.text();
+                console.warn(`writeFile: Unexpected response checking ${path}: ${getRes.status} - ${errText}`);
             }
-        } catch { }
+        } catch (err) {
+            console.warn(`writeFile: Error checking existing file at ${path}:`, err);
+        }
+
+        const payload = {
+            message: `${sha ? "Update" : "Create"} ${path}`,
+            content: base64Content.split(",")[1],
+            sha: sha || undefined,
+        };
 
         const putRes = await fetch(url, {
             method: "PUT",
-            headers: { Authorization: `token ${token}` },
-            body: JSON.stringify({
-                message: `${sha ? "Update" : "Create"} ${path}`,
-                content: base64Content.split(",")[1],
-                sha: sha || undefined
-            })
+            headers: { Authorization: `token ${token}`, Accept: "application/vnd.github+json" },
+            body: JSON.stringify(payload),
         });
 
         if (!putRes.ok) {
             const errText = await putRes.text();
-            throw new Error(`Failed to upload file: ${putRes.status} ${putRes.statusText} - ${errText}`);
+            console.error(`writeFile failed for ${path}: ${putRes.status} ${putRes.statusText} - ${errText}`);
+            return { error: `Failed to upload file: ${putRes.status} ${putRes.statusText} - ${errText}` };
         }
 
-        return await putRes.json();
+        const result = await putRes.json();
+        return result;
     } catch (err) {
-        console.error("writeFile error:", err);
+        console.error("writeFile unexpected error:", err);
         return { error: err.message };
     }
 }
 
+
 export async function readJsonFile(token, repo, path) {
+
+    if (!token) {
+        const msg = "❌ readJsonFile error: No GitHub token provided";
+        console.error(msg);
+        return { error: msg };
+    }
+
+    if (!path || path === "null") {
+        const msg = "⚠️ readJsonFile warning: Path is null or undefined";
+        return { error: msg };
+    }
+
     try {
         const url = `https://api.github.com/repos/${repo}/contents/${path}?v=${Date.now()}`;
+
         const res = await fetch(url, {
             headers: {
                 Authorization: `token ${token}`,
-            }
+                Accept: "application/vnd.github.v3+json",
+            },
         });
 
         if (!res.ok) {
             const errText = await res.text();
-            throw new Error(`Failed to fetch ${path}: ${res.status} ${res.statusText} - ${errText}`);
+            const msg = `❌ Failed to fetch ${path}: ${res.status} ${res.statusText} - ${errText}`;
+            console.error(msg);
+            return { error: msg, status: res.status, details: errText };
         }
 
         const data = await res.json();
-        const content = atob(data.content);
-        return JSON.parse(content);
+
+        if (!data.content) {
+            const msg = `⚠️ GitHub response for ${path} does not include content`;
+            console.warn(msg, data);
+            return { error: msg, data };
+        }
+
+        const decoded = atob(data.content);
+        const json = JSON.parse(decoded);
+
+        return { data: json };
+
     } catch (err) {
-        console.error("readJsonFile error:", err);
-        return null;
+        const msg = `❌ readJsonFile unexpected error for ${path}: ${err.message}`;
+        return { error: msg, details: err };
     }
 }
 
-
 export async function deleteFile(token, repo, path, branch = "main") {
+    if (!token) {
+        throw new Error("No GitHub token provided");
+    }
+    if (path === null || path === undefined || path === "null") {
+        return;
+    }
     try {
         const url = `https://api.github.com/repos/${repo}/contents/${path}`;
 

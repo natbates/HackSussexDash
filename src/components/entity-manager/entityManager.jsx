@@ -1,7 +1,6 @@
 import { useState } from "react";
 import useCrud from "../../hooks/useCrud.jsx";
-import { writeFile } from "../../util/githubWrite";
-import useToken from "../../hooks/useToken";
+import { useAuth } from "../../hooks/useAuth.jsx";
 import EntityForm from "../entity-form/entityForm.jsx";
 import styles from "./entityManager.module.css";
 import LoadingScreen from "../misc/loading.jsx";
@@ -9,37 +8,55 @@ import LoadingScreen from "../misc/loading.jsx";
 const PAGE_SIZE = 10;
 const ROOT = "__root__";
 
-const toBase64 = (file) => new Promise((resolve, reject) => {
-  const reader = new FileReader();
-  reader.readAsDataURL(file);
-  reader.onload = () => resolve(reader.result);
-  reader.onerror = reject;
-});
+const toBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+  });
 
-const processItemWithFiles = async (item, config, token, repo) => {
+const processItemWithFiles = async (item, config, jwtToken) => {
   const processed = { ...item };
-  if (item._files && config.imagePath) {
+
+  if (item._files && config?.imagePath) {
     for (const [field, file] of Object.entries(item._files)) {
-      const ext = file.name.split('.').pop();
-      const filename = crypto.randomUUID() + '.' + ext;
-      const path = `${config.imagePath}/${filename}`;
-      const base64 = await toBase64(file);
-      const result = await writeFile(token, repo, path, base64);
-      if (result.error) {
-        throw new Error(`Failed to upload ${field}: ${result.error}`);
+      try {
+        const ext = file.name.split(".").pop();
+        const filename = crypto.randomUUID() + "." + ext;
+        const path = `${config.imagePath}/${filename}`;
+        const base64 = await toBase64(file);
+
+        const res = await fetch("/.netlify/functions/upload-file", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${jwtToken}`,
+          },
+          body: JSON.stringify({ path, base64 }),
+        });
+
+        const json = await res.json();
+        if (!res.ok || json.error) {
+          throw new Error(json.error || "Upload failed");
+        }
+
+        processed[field] = json.url; 
+      } catch (err) {
+        console.error(`Error processing file ${field}`, err);
+        throw err;
       }
-      processed[field] = `https://raw.githubusercontent.com/${repo}/main/${path}`;
     }
   }
+
   delete processed._files;
   return processed;
 };
 
 export default function EntityManager({ config, refreshKey }) {
+  const { token: jwtToken } = useAuth();
   const { data, loading, addItem, updateItem, deleteItem } =
-    useCrud(config.file, refreshKey);
-  const token = useToken();
-  const repo = process.env.REACT_APP_GITHUB_REPO;
+    useCrud(config?.file, refreshKey);
 
   const [editing, setEditing] = useState(null);
   const [addingKey, setAddingKey] = useState(null);
@@ -47,38 +64,42 @@ export default function EntityManager({ config, refreshKey }) {
   const [filters, setFilters] = useState({});
   const [visibleCount, setVisibleCount] = useState({});
 
-  if (loading) return <LoadingScreen />;
-  if (!data) return <p>No data</p>;
+  if (loading) return <LoadingScreen message="Loading entities..." />;
+  if (!data) return <p>No data found.</p>;
+
 
   const matchesSearch = (item) => {
     if (!search) return true;
+    if (!item) return false;
 
     const fields =
-      config.searchFields ??
+      config?.searchFields ??
       Object.keys(item).filter((k) => typeof item[k] === "string");
 
-    return fields.some((f) =>
-      item[f]?.toLowerCase().includes(search.toLowerCase())
+    return fields.some(
+      (f) =>
+        item[f]?.toString().toLowerCase().includes(search.toLowerCase())
     );
   };
 
-  const matchesFilters = (item) =>
-    Object.entries(filters).every(
-      ([field, value]) => value === "" || item[field] === value
-    );
+  const matchesFilters = (item) => {
+    if (!filters || !item) return true;
+
+    return Object.entries(filters).every(([field, value]) => {
+      if (value === "" || value === null || value === undefined) return true;
+      return item[field] === value;
+    });
+  };
 
   const filterItems = (items = []) =>
-    items.filter(
-      (item) => matchesSearch(item) && matchesFilters(item)
-    );
+    Array.isArray(items) ? items.filter((item) => matchesSearch(item) && matchesFilters(item)) : [];
 
   const filteredData = (() => {
-    if (config.mode === "collection") {
-      return filterItems(data);
-    }
+    if (!config) return data;
+    if (config.mode === "collection") return filterItems(data);
     if (config.mode === "sectioned") {
       const out = {};
-      config.sections.forEach((sec) => {
+      (config.sections ?? []).forEach((sec) => {
         out[sec.key] = filterItems(data[sec.key] ?? []);
       });
       return out;
@@ -86,31 +107,18 @@ export default function EntityManager({ config, refreshKey }) {
     return data;
   })();
 
-  const getVisible = (items, key) => {
-    const count = visibleCount[key] ?? PAGE_SIZE;
-    return items.slice(0, count);
-  };
 
-  const canShowMore = (items, key) =>
-    (visibleCount[key] ?? PAGE_SIZE) < items.length;
-
-  const canShowLess = (key) =>
-    (visibleCount[key] ?? PAGE_SIZE) > PAGE_SIZE;
-
+  const getVisible = (items, key) => (items?.slice?.(0, visibleCount[key] ?? PAGE_SIZE) ?? []);
+  const canShowMore = (items, key) => (visibleCount[key] ?? PAGE_SIZE) < (items?.length ?? 0);
+  const canShowLess = (key) => (visibleCount[key] ?? PAGE_SIZE) > PAGE_SIZE;
   const showMore = (key) =>
-    setVisibleCount((v) => ({
-      ...v,
-      [key]: (v[key] ?? PAGE_SIZE) + PAGE_SIZE
-    }));
-
-  const showLess = (key) =>
-    setVisibleCount((v) => ({
-      ...v,
-      [key]: PAGE_SIZE
-    }));
+    setVisibleCount((v) => ({ ...v, [key]: (v[key] ?? PAGE_SIZE) + PAGE_SIZE }));
+  const showLess = (key) => setVisibleCount((v) => ({ ...v, [key]: PAGE_SIZE }));
 
 
   const renderRow = (item, section = null) => {
+    if (!item) return null;
+
     if (editing?.id === item.id) {
       return (
         <div key={item.id} className={styles.row}>
@@ -119,9 +127,13 @@ export default function EntityManager({ config, refreshKey }) {
             initialData={editing}
             onCancel={() => setEditing(null)}
             onSave={async (updated) => {
-              const processed = await processItemWithFiles(updated, config, token, repo);
-              updateItem(processed.id, processed, editing.section);
-              setEditing(null);
+              try {
+                const processed = await processItemWithFiles(updated, config, jwtToken);
+                await updateItem(processed.id, processed, editing.section);
+                setEditing(null);
+              } catch (err) {
+                console.error("Failed to save edited item:", err);
+              }
             }}
           />
         </div>
@@ -134,77 +146,85 @@ export default function EntityManager({ config, refreshKey }) {
           <strong>{item.name ?? item.title ?? "Untitled"}</strong>
           <span className={styles.line}></span>
           <div className={styles.actions}>
-            <button className="secondary" onClick={() => setEditing({ ...item, section })}>
+            <button
+              className="secondary"
+              onClick={() => setEditing({ ...item, section })}
+            >
               Edit
             </button>
-            <button onClick={() => deleteItem(item.id, section)}>
-              Delete
-            </button>
+            <button onClick={() => deleteItem(item.id, section)}>Delete</button>
           </div>
         </div>
       </div>
     );
   };
 
-  const renderControls = () => (
-    <div className={styles.controls} style={config.mode === "singleton" ? {display: "none"} : {}}>
-      {config.mode !== "singleton" && (
-        <div className={styles.searchContainer}>
-        <input
-          className={styles.search}
-          placeholder="Search…"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setVisibleCount({});
-          }}
-        />
-        <button onClick={() => {setSearch(""); setFilters({}); setVisibleCount({}); }}>Clear</button>
-        </div>
-      )}
 
-      {config.filters?.map((filter) => (
-        <select
-          className="secondary"
-          key={filter.field}
-          value={(() => {
-            const val = filters[filter.field];
-            if (val === true) return "true";
-            if (val === false) return "false";
-            return val ?? "";
-          })()}
-          onChange={(e) => {
-            let filterValue = e.target.value;
-            if (e.target.value !== "") {
-              if (filter.field === "pastCommittee") {
-                filterValue = e.target.value === "true";
-              }
+  const renderControls = () => {
+    if (!config || config.mode === "singleton") return null;
+
+    return (
+      <div className={styles.controls}>
+        {config.mode !== "singleton" && (
+          <div className={styles.searchContainer}>
+            <input
+              className={styles.search}
+              placeholder="Search…"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setVisibleCount({});
+              }}
+            />
+            <button
+              onClick={() => {
+                setSearch("");
+                setFilters({});
+                setVisibleCount({});
+              }}
+            >
+              Clear
+            </button>
+          </div>
+        )}
+
+        {(config.filters ?? []).map((filter) => (
+          <select
+            className="secondary"
+            key={filter.field}
+            value={
+              filters[filter.field] === true
+                ? "true"
+                : filters[filter.field] === false
+                ? "false"
+                : filters[filter.field] ?? ""
             }
-            setFilters((f) => ({
-              ...f,
-              [filter.field]: filterValue
-            }));
-            setVisibleCount({});
-          }}
-        >
-          <option value="">All {filter.label}</option>
-          {filter.options.map((opt) => {
-            const value = typeof opt === "boolean" ? (opt ? "true" : "false") : String(opt);
-            const display = typeof opt === "boolean" ? (opt ? "Yes" : "No") : String(opt);
-            return (
-              <option key={value} value={value}>
-                {display}
-              </option>
-            );
-          })}
-        </select>
-      ))}
+            onChange={(e) => {
+              let val = e.target.value;
+              if (filter.field === "pastCommittee") val = val === "true";
+              setFilters((f) => ({ ...f, [filter.field]: val }));
+              setVisibleCount({});
+            }}
+          >
+            <option value="">All {filter.label}</option>
+            {(filter.options ?? []).map((opt) => {
+              const value = typeof opt === "boolean" ? String(opt) : opt ?? "";
+              const display = typeof opt === "boolean" ? (opt ? "Yes" : "No") : String(opt);
+              return (
+                <option key={value} value={value}>
+                  {display}
+                </option>
+              );
+            })}
+          </select>
+        ))}
 
-      {config.mode === "collection" && <button onClick={() => setAddingKey(ROOT)}>+ Add</button>}
-    </div>
-  );
+        {config.mode === "collection" && <button onClick={() => setAddingKey(ROOT)}>+ Add</button>}
+      </div>
+    );
+  };
 
-  if (config.mode === "singleton") {
+  if (config?.mode === "singleton") {
     return (
       <div className={styles.manager}>
         {renderControls()}
@@ -213,16 +233,20 @@ export default function EntityManager({ config, refreshKey }) {
           initialData={data}
           onCancel={() => {}}
           onSave={async (updated) => {
-            const processed = await processItemWithFiles(updated, config, token, repo);
-            updateItem(null, processed);
+            try {
+              const processed = await processItemWithFiles(updated, config, jwtToken);
+              await updateItem(null, processed);
+            } catch (err) {
+              console.error("Failed to save singleton item:", err);
+            }
           }}
         />
       </div>
     );
   }
 
-  if (config.mode === "collection") {
-    const items = filteredData;
+  if (config?.mode === "collection") {
+    const items = filteredData ?? [];
     const visible = getVisible(items, ROOT);
 
     return (
@@ -234,28 +258,25 @@ export default function EntityManager({ config, refreshKey }) {
             config={config}
             onCancel={() => setAddingKey(null)}
             onSave={async (item) => {
-              const processed = await processItemWithFiles(item, config, token, repo);
-              addItem(processed);
-              setAddingKey(null);
+              try {
+                const processed = await processItemWithFiles(item, config, jwtToken);
+                await addItem(processed);
+                setAddingKey(null);
+              } catch (err) {
+                console.error("Failed to add item:", err);
+              }
             }}
           />
         )}
-
 
         {visible.map((item) => renderRow(item))}
 
         {items.length > PAGE_SIZE && (
           <div className={styles.pagination}>
-            <button
-              onClick={() => showMore(ROOT)}
-              disabled={!canShowMore(items, ROOT)}
-            >
+            <button onClick={() => showMore(ROOT)} disabled={!canShowMore(items, ROOT)}>
               Show more
             </button>
-            <button
-              onClick={() => showLess(ROOT)}
-              disabled={!canShowLess(ROOT)}
-            >
+            <button onClick={() => showLess(ROOT)} disabled={!canShowLess(ROOT)}>
               Show less
             </button>
           </div>
@@ -264,55 +285,46 @@ export default function EntityManager({ config, refreshKey }) {
     );
   }
 
-  if (config.mode === "sectioned") {
+  if (config?.mode === "sectioned") {
     return (
       <div className={styles.manager}>
         {renderControls()}
 
-        {config.sections.map((sec) => {
+        {(config.sections ?? []).map((sec) => {
           const items = filteredData[sec.key] ?? [];
           const visible = getVisible(items, sec.key);
 
           return (
             <div key={sec.key} className={styles.section}>
-              
               <div className={styles.sectionTop}>
                 <h3>{sec.label}</h3>
-
                 {addingKey === sec.key ? (
                   <EntityForm
                     config={config}
                     onCancel={() => setAddingKey(null)}
                     onSave={async (item) => {
-                      const processed = await processItemWithFiles(item, config, token, repo);
-                      addItem(processed, sec.key);
-                      setAddingKey(null);
+                      try {
+                        const processed = await processItemWithFiles(item, config, jwtToken);
+                        await addItem(processed, sec.key);
+                        setAddingKey(null);
+                      } catch (err) {
+                        console.error(`Failed to add item in section ${sec.key}:`, err);
+                      }
                     }}
                   />
-                ) :
-
-                <button onClick={() => setAddingKey(sec.key)}>
-                  + Add
-                </button>
-                }
+                ) : (
+                  <button onClick={() => setAddingKey(sec.key)}>+ Add</button>
+                )}
               </div>
 
-              {visible.map((item) =>
-                renderRow(item, sec.key)
-              )}
+              {visible.map((item) => renderRow(item, sec.key))}
 
               {items.length > PAGE_SIZE && (
                 <div className={styles.pagination}>
-                  <button
-                    onClick={() => showMore(sec.key)}
-                    disabled={!canShowMore(items, sec.key)}
-                  >
+                  <button onClick={() => showMore(sec.key)} disabled={!canShowMore(items, sec.key)}>
                     Show more
                   </button>
-                  <button
-                    onClick={() => showLess(sec.key)}
-                    disabled={!canShowLess(sec.key)}
-                  >
+                  <button onClick={() => showLess(sec.key)} disabled={!canShowLess(sec.key)}>
                     Show less
                   </button>
                 </div>

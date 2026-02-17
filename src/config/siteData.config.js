@@ -8,13 +8,13 @@ export default {
     mode: "singleton",
 
     fields: [
-        { name: "discord", label: "Discord" },
-        { name: "instagram", label: "Instagram" },
-        { name: "x", label: "X / Twitter" },
-        { name: "youtube", label: "YouTube" },
-        { name: "tiktok", label: "TikTok" },
-        { name: "merch", label: "Merch Store" },
-        { name: "mlhToggle", label: "MLH Enabled", type: "boolean" }
+        { name: "discord", label: "Discord", required: true },
+        { name: "instagram", label: "Instagram", required: true },
+        { name: "x", label: "X / Twitter", required: true },
+        { name: "youtube", label: "YouTube", required: true },
+        { name: "tiktok", label: "TikTok", required: true },
+        { name: "merch", label: "Merch Store", required: true },
+        { name: "mlhToggle", label: "MLH Enabled", type: "boolean", required: true }
     ],
 
     validation: {
