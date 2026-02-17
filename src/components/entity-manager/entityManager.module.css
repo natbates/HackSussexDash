@@ -53,14 +53,18 @@
     background-color: var(--secondary-btn-border);
 }
 
-.sectionTop
-{
-    display: flex;
-    justify-content: space-between;
-    flex-direction: row;
-    margin-bottom: 15px;
-    align-items: center;
+.sectionTop {
+  display: flex;
+  align-items: center;  
+  justify-content: space-between; 
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
+
+.sectionTop button {
+  height: auto;         
+}
+
 
 .sectionTop h3
 {

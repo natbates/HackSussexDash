@@ -298,7 +298,13 @@ export default function EntityManager({ config, refreshKey }) {
             <div key={sec.key} className={styles.section}>
               <div className={styles.sectionTop}>
                 <h3>{sec.label}</h3>
-                {addingKey === sec.key ? (
+                {addingKey !== sec.key && (
+                  <button onClick={() => setAddingKey(sec.key)}>+ Add</button>
+                )}
+              </div>
+
+              {addingKey === sec.key && (
+                <div className={styles.sectionForm}>
                   <EntityForm
                     config={config}
                     onCancel={() => setAddingKey(null)}
@@ -312,11 +318,10 @@ export default function EntityManager({ config, refreshKey }) {
                       }
                     }}
                   />
-                ) : (
-                  <button onClick={() => setAddingKey(sec.key)}>+ Add</button>
-                )}
-              </div>
+                </div>
+              )}
 
+              
               {visible.map((item) => renderRow(item, sec.key))}
 
               {items.length > PAGE_SIZE && (
