@@ -101,7 +101,31 @@ export default function EntityForm({
         requiredErrors[f.name] = `${f.label} is required`;
       }
     });
+    const { valid, errors: validationErrors } = validateFields(preparedData, config.validation);
 
+    const requiredErrors = {};
+    config.fields.forEach(f => {
+      if (!f.required) return;
+
+      const value = preparedData[f.name];
+
+      if (f.type === "file") {
+        if (!fileUploads[f.name] && (!value || value === "")) {
+          requiredErrors[f.name] = `${f.label} is required`;
+        }
+      } else if (Array.isArray(value)) {
+        if (value.length === 0) {
+          requiredErrors[f.name] = `${f.label} is required`;
+        }
+      } else if (value === undefined || value === null || value === "") {
+        requiredErrors[f.name] = `${f.label} is required`;
+      }
+    });
+
+    const combinedErrors = { ...validationErrors, ...requiredErrors };
+
+    if (Object.keys(combinedErrors).length > 0) {
+      setErrors(combinedErrors);
     const combinedErrors = { ...validationErrors, ...requiredErrors };
 
     if (Object.keys(combinedErrors).length > 0) {
@@ -122,6 +146,7 @@ export default function EntityForm({
   };
 
 
+
   const revert = () => {
     setData(originalData);
     setErrors({});
@@ -135,6 +160,25 @@ export default function EntityForm({
     )
       return;
     onCancel();
+  };
+
+  const canSave = () => {
+    return config.fields.every(f => {
+      if (!f.required) return true;
+
+      const value = preparedData[f.name];
+
+      if (f.type === "file") {
+        return !!fileUploads[f.name] || (value && value !== "");
+      }
+
+      return (
+        value !== undefined &&
+        value !== null &&
+        value !== "" &&
+        !(Array.isArray(value) && value.length === 0)
+      );
+    }) && hasChanges;
   };
 
   const canSave = () => {
@@ -179,6 +223,9 @@ export default function EntityForm({
 
       {config.fields.map(f => (
         <div key={f.name} className={styles.field}>
+          <label>
+            {f.label} {f.required && <span className={styles.required}>*</span>}
+          </label>
           <label>
             {f.label} {f.required && <span className={styles.required}>*</span>}
           </label>
@@ -262,6 +309,7 @@ export default function EntityForm({
               )}
               <input
                 type="file"
+                accept="image/*"
                 accept="image/*"
                 onChange={e => {
                   const file = e.target.files?.[0];
@@ -362,6 +410,10 @@ export default function EntityForm({
             Revert
           </button>
         )}
+        <button
+          onClick={submit}
+          disabled={!canSave() || submitting}
+        >
         <button
           onClick={submit}
           disabled={!canSave() || submitting}
