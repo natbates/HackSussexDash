@@ -15,7 +15,6 @@ const Footer = () => {
         © {currentYear} HackSussex — Admin Dashboard | v{version}
       </div>
       <div className={styles.right}>
-        {/* <a href="/help">Help</a> */}
         <a href={websiteUrl} target="_blank" rel="noopener noreferrer">
           Visit Website
         </a>

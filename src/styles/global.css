@@ -1,4 +1,3 @@
-/* Dark Theme Variables */
 :root {
     --accent-colour:  #6ca0f3;
     --text-colour: #e7e7e7fc;
@@ -9,7 +8,6 @@
     --border-radius: 0;
     --error: #ee7c7e;
 
-    /* Buttons */
     --primary-btn-bg: white;
     --primary-btn-color: black;
     --secondary-btn-bg: black;
@@ -19,7 +17,7 @@
     --theme-btn-color: var(--text-colour);
     --theme-btn-active-bg: var(--accent-colour);
 }
-/* Global resets */
+
 * {
     box-sizing: border-box;
 }
@@ -79,8 +77,6 @@ p, span, a, li, div, button, input, label, textarea {
   margin: 1rem 0;
   margin-bottom: 0;
 }
-
-/* Buttons */
 
 button
 {

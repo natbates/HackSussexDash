@@ -31,10 +31,6 @@
   gap: 1.5rem;
 }
 
-/* .dashboardFooter {
-  padding-left: calc(1rem + 54px);
-} */
-
 @media (max-width: 740px) {
   .left
   {

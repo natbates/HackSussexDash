@@ -14,11 +14,7 @@ export default function EntityForm({
     const defaults = {};
     config.fields.forEach(f => {
       if (f.type === "boolean") defaults[f.name] = false;
-      else if (
-        f.type === "array" ||
-        f.type === "multiSelect" ||
-        f.parse === "csv"
-      )
+      else if (f.type === "array" || f.type === "multiSelect" || f.parse === "csv")
         defaults[f.name] = [];
       else defaults[f.name] = "";
     });
@@ -49,7 +45,6 @@ export default function EntityForm({
   const isEditing = Boolean(initialData?.id);
   const isSingleton = config.mode === "singleton";
 
-  /* -------- SPONSORS -------- */
   const hasSponsorsField = config.fields?.some(
     f => f.name === "sponsors" && f.type === "multiSelect"
   );
@@ -59,7 +54,6 @@ export default function EntityForm({
 
   const preparedData = useMemo(() => {
     const out = { ...data };
-
     config.fields?.forEach(f => {
       if (f.parse === "csv" && typeof out[f.name] === "string") {
         out[f.name] = out[f.name]
@@ -68,7 +62,6 @@ export default function EntityForm({
           .filter(Boolean);
       }
     });
-
     return out;
   }, [data, config.fields]);
 
@@ -76,21 +69,36 @@ export default function EntityForm({
     JSON.stringify(preparedData) !== JSON.stringify(originalData) ||
     Object.keys(fileUploads).length > 0;
 
-  /* -------- ACTIONS -------- */
-
   const submit = async () => {
-    const { valid, errors } = validateFields(
-      preparedData,
-      config.validation
-    );
+    const { valid, errors: validationErrors } = validateFields(preparedData, config.validation);
 
-    if (!valid) {
-      setErrors(errors);
+    const requiredErrors = {};
+    config.fields.forEach(f => {
+      if (!f.required) return;
+
+      const value = preparedData[f.name];
+
+      if (f.type === "file") {
+        if (!fileUploads[f.name] && (!value || value === "")) {
+          requiredErrors[f.name] = `${f.label} is required`;
+        }
+      } else if (Array.isArray(value)) {
+        if (value.length === 0) {
+          requiredErrors[f.name] = `${f.label} is required`;
+        }
+      } else if (value === undefined || value === null || value === "") {
+        requiredErrors[f.name] = `${f.label} is required`;
+      }
+    });
+
+    const combinedErrors = { ...validationErrors, ...requiredErrors };
+
+    if (Object.keys(combinedErrors).length > 0) {
+      setErrors(combinedErrors);
       return;
     }
 
     setSubmitting(true);
-
     try {
       await onSave({
         ...preparedData,
@@ -101,6 +109,7 @@ export default function EntityForm({
       setSubmitting(false);
     }
   };
+
 
   const revert = () => {
     setData(originalData);
@@ -117,7 +126,25 @@ export default function EntityForm({
     onCancel();
   };
 
-  /* -------- RENDER -------- */
+  const canSave = () => {
+    return config.fields.every(f => {
+      if (!f.required) return true;
+
+      const value = preparedData[f.name];
+
+      if (f.type === "file") {
+        return !!fileUploads[f.name] || (value && value !== "");
+      }
+
+      return (
+        value !== undefined &&
+        value !== null &&
+        value !== "" &&
+        !(Array.isArray(value) && value.length === 0)
+      );
+    }) && hasChanges;
+  };
+
 
   return (
     <div
@@ -141,9 +168,10 @@ export default function EntityForm({
 
       {config.fields.map(f => (
         <div key={f.name} className={styles.field}>
-          <label>{f.label}</label>
+          <label>
+            {f.label} {f.required && <span className={styles.required}>*</span>}
+          </label>
 
-          {/* TEXT */}
           {!f.type && (
             <input
               type="text"
@@ -154,7 +182,6 @@ export default function EntityForm({
             />
           )}
 
-          {/* TEXTAREA */}
           {f.type === "textarea" && (
             <textarea
               value={data[f.name] ?? ""}
@@ -164,7 +191,6 @@ export default function EntityForm({
             />
           )}
 
-          {/* BOOLEAN */}
           {f.type === "boolean" && (
             <input
               type="checkbox"
@@ -175,7 +201,6 @@ export default function EntityForm({
             />
           )}
 
-          {/* SELECT */}
           {f.type === "select" && (
             <select
               value={data[f.name] ?? ""}
@@ -192,7 +217,6 @@ export default function EntityForm({
             </select>
           )}
 
-          {/* DATE */}
           {f.type === "date" && (
             <input
               type="date"
@@ -203,7 +227,6 @@ export default function EntityForm({
             />
           )}
 
-          {/* URL */}
           {f.type === "url" && (
             <input
               type="url"
@@ -215,7 +238,6 @@ export default function EntityForm({
             />
           )}
 
-          {/* FILE */}
           {f.type === "file" && (
             <>
               {data[f.name] && typeof data[f.name] === "string" && (
@@ -229,7 +251,7 @@ export default function EntityForm({
               )}
               <input
                 type="file"
-                accept={f.accept}
+                accept="image/*"
                 onChange={e => {
                   const file = e.target.files?.[0];
                   if (!file) return;
@@ -242,7 +264,6 @@ export default function EntityForm({
             </>
           )}
 
-          {/* SPONSORS MULTISELECT */}
           {f.type === "multiSelect" && f.name === "sponsors" && (
             <div className={styles.multiSelect}>
               {sponsorsData?.map(sponsor => (
@@ -273,92 +294,11 @@ export default function EntityForm({
           )}
 
           {errors[f.name] && (
-            <span className={styles.error}>
-              Invalid {f.label}
-            </span>
+            <span className={styles.error}>{errors[f.name]}</span>
           )}
         </div>
       ))}
 
-      {/* -------- NESTED (SCHEDULE) -------- */}
-      {config.nested &&
-        Object.entries(config.nested).map(([key, nested]) => {
-          const items = data[key] || [];
-
-          return (
-            <div key={key} className={styles.field}>
-              <label>{nested.label}</label>
-
-              {items.map((item, index) => (
-                <div key={index} className={styles.repeatableItem}>
-                  <div className={styles.dayHeader}>
-                    <label>Day {index + 1}</label>
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={() =>
-                        setData(prev => ({
-                          ...prev,
-                          [key]: prev[key].filter((_, i) => i !== index)
-                        }))
-                      }
-                    >
-                      Remove Day
-                    </button>
-                  </div>
-
-                  {(item.events || []).map((event, i) => (
-                    <div key={i} className={styles.repeatableSubItem}>
-                      {nested.fields[1].fields.map(f => (
-                        <div key={f.name}>
-                          <label>{f.label}</label>
-                          <input
-                            type="text"
-                            value={event[f.name] || ""}
-                            onChange={e => {
-                              const newData = structuredClone(data);
-                              newData[key][index].events[i][f.name] =
-                                e.target.value;
-                              setData(newData);
-                            }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-
-                  <button
-                    type="button"
-                    className="secondary"
-                    onClick={() => {
-                      const newData = structuredClone(data);
-                      newData[key][index].events.push({});
-                      setData(newData);
-                    }}
-                  >
-                    Add Event
-                  </button>
-                </div>
-              ))}
-
-              <button
-                type="button"
-                className="secondary"
-                style={{marginTop: "15px"}}
-                onClick={() =>
-                  setData(prev => ({
-                    ...prev,
-                    [key]: [...prev[key], { events: [{}] }]
-                  }))
-                }
-              >
-                Add Day
-              </button>
-            </div>
-          );
-        })}
-
-      {/* -------- BUTTONS -------- */}
       <div className={styles.buttons}>
         {(!isSingleton) && (
           <button onClick={handleCancel} disabled={submitting}>Cancel</button>
@@ -368,7 +308,10 @@ export default function EntityForm({
             Revert
           </button>
         )}
-        <button onClick={submit} disabled={!hasChanges || submitting}>
+        <button
+          onClick={submit}
+          disabled={!canSave() || submitting}
+        >
           Save
         </button>
       </div>

@@ -37,18 +37,17 @@
 }
 
 .search {
-  padding: 0.5rem 2rem 0.5rem 0.5rem; /* leave space for icon */
+  padding: 0.5rem 2rem 0.5rem 0.5rem; 
   font-size: 1rem;
 }
 
 .icon {
   position: absolute;
   right: 0.5rem;
-  pointer-events: none; /* lets clicks go to the input */
+  pointer-events: none; 
   color: var(--container-border-colour);
 }
 
-/* LEFT SIDE */
 .left {
   display: flex;
   align-items: center;
@@ -79,24 +78,22 @@
   text-decoration: underline;
 }
 
-/* RIGHT SIDE */
 .right {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-/* SEARCH BAR */
 .searchWrapper {
   position: relative;
   display: flex;
   align-items: center;
-  width: 250px; /* adjust as needed */
+  width: 250px; 
 }
 
 .search {
   width: 100%;
-  padding: 0.4rem 2.5rem 0.4rem 0.75rem; /* extra space on right for icon */
+  padding: 0.4rem 2.5rem 0.4rem 0.75rem; 
   height: 100%;
   border-radius: var(--border-radius);
   border: 1px solid var(--container-border-colour);
@@ -157,14 +154,14 @@
 
 .searchDropdown {
   position: absolute;
-  top: 100%; /* directly below input */
+  top: 100%; 
   left: 0;
   width: 100%;
-  max-height: 250px; /* optional: scroll if many items */
+  max-height: 250px;
   overflow-y: auto;
   background: var(--container-colour);
   border: 1px solid var(--accent-colour);
-  border-top: none; /* looks like it's part of input */
+  border-top: none; 
   border-radius: 0 0 var(--border-radius) var(--border-radius);
   z-index: 1000;
   padding-top: 5px;
@@ -191,7 +188,6 @@
     color: var(--accent-colour);
 }
 
-/* DROPDOWN ITEM */
 .searchDropdownItem {
   padding: 0.5rem 0.75rem;
   cursor: pointer;

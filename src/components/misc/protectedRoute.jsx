@@ -17,9 +17,7 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!token || error && !isDev) {
-    console.log("protected-route");
 
-    // Save the page the user attempted to access
     localStorage.setItem("redirect_after_login", location.pathname);
 
     return <Navigate to="/" replace />;
