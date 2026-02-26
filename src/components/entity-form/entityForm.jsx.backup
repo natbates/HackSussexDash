@@ -14,25 +14,27 @@ export default function EntityForm({
     const defaults = {};
     config.fields.forEach(f => {
       if (f.type === "boolean") defaults[f.name] = false;
-      else if (
-        f.type === "array" ||
-        f.type === "multiSelect" ||
-        f.parse === "csv" ||
-        f.type === "sponsorTiers"
-      ) {
-        // sponsorTiers is an object with four arrays
-        if (f.type === "sponsorTiers") {
-          defaults[f.name] = {
-            gold: [],
-            silver: [],
-            bronze: [],
-            partner: []
-          };
-        } else {
-          defaults[f.name] = [];
-        }
-      } else defaults[f.name] = "";
-    });
+          else if (
+            f.type === "array" ||
+            f.type === "multiSelect" ||
+            f.parse === "csv" ||
+            f.type === "sponsorTiers"
+          ) {
+            // sponsorTiers is an object with four arrays
+            if (f.type === "sponsorTiers") {
+              defaults[f.name] = {
+                gold: [],
+                silver: [],
+                bronze: [],
+                partner: []
+              };
+            } else {
+              defaults[f.name] = [];
+            }
+          } else defaults[f.name] = "";
+        if (nested.type === "repeatable") defaults[key] = [];
+      });
+    }
 
     return defaults;
   };
@@ -181,6 +183,9 @@ export default function EntityForm({
           <label>
             {f.label} {f.required && <span className={styles.required}>*</span>}
           </label>
+          <label>
+            {f.label} {f.required && <span className={styles.required}>*</span>}
+          </label>
 
           {!f.type && (
             <input
@@ -261,6 +266,7 @@ export default function EntityForm({
               )}
               <input
                 type="file"
+                accept="image/*"
                 accept="image/*"
                 onChange={e => {
                   const file = e.target.files?.[0];
@@ -361,6 +367,10 @@ export default function EntityForm({
             Revert
           </button>
         )}
+        <button
+          onClick={submit}
+          disabled={!canSave() || submitting}
+        >
         <button
           onClick={submit}
           disabled={!canSave() || submitting}
