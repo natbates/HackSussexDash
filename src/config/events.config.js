@@ -60,7 +60,7 @@ export default {
         {
             name: "sponsors",
             label: "Sponsors",
-            type: "multiSelect"
+            type: "sponsorTiers"
         }
     ],
 

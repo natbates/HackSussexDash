@@ -14,13 +14,24 @@ export default function EntityForm({
     const defaults = {};
     config.fields.forEach(f => {
       if (f.type === "boolean") defaults[f.name] = false;
-      else if (f.type === "array" || f.type === "multiSelect" || f.parse === "csv")
-        defaults[f.name] = [];
-      else defaults[f.name] = "";
-    });
-
-    if (config.nested) {
-      Object.entries(config.nested).forEach(([key, nested]) => {
+          else if (
+            f.type === "array" ||
+            f.type === "multiSelect" ||
+            f.parse === "csv" ||
+            f.type === "sponsorTiers"
+          ) {
+            // sponsorTiers is an object with four arrays
+            if (f.type === "sponsorTiers") {
+              defaults[f.name] = {
+                gold: [],
+                silver: [],
+                bronze: [],
+                partner: []
+              };
+            } else {
+              defaults[f.name] = [];
+            }
+          } else defaults[f.name] = "";
         if (nested.type === "repeatable") defaults[key] = [];
       });
     }
@@ -46,7 +57,7 @@ export default function EntityForm({
   const isSingleton = config.mode === "singleton";
 
   const hasSponsorsField = config.fields?.some(
-    f => f.name === "sponsors" && f.type === "multiSelect"
+    f => f.name === "sponsors" && (f.type === "multiSelect" || f.type === "sponsorTiers")
   );
   const { data: sponsorsData } = useCrud(
     hasSponsorsField ? "src/config/sponsors.json" : null
@@ -289,6 +300,49 @@ export default function EntityForm({
                 >
                   {sponsor.name}
                 </button>
+              ))}
+            </div>
+          )}
+
+          {f.type === "sponsorTiers" && (
+            <div className={styles.sponsorTiers}>
+              {["gold", "silver", "bronze", "partner"].map(tier => (
+                <div key={tier} className={styles.tierRow}>
+                  <label>{tier.charAt(0).toUpperCase() + tier.slice(1)} Sponsors</label>
+                  <div className={styles.multiSelect}>
+                    {sponsorsData?.map(sponsor => {
+                      const selectedIds = data.sponsors?.[tier] || [];
+                      return (
+                        <button
+                          key={sponsor.id + tier}
+                          type="button"
+                          className={
+                            selectedIds.includes(sponsor.id)
+                              ? styles.selected
+                              : ""
+                          }
+                          onClick={() =>
+                            setData(prev => {
+                              const currentTier = prev.sponsors?.[tier] || [];
+                              const updatedTier = currentTier.includes(sponsor.id)
+                                ? currentTier.filter(id => id !== sponsor.id)
+                                : [...currentTier, sponsor.id];
+                              return {
+                                ...prev,
+                                sponsors: {
+                                  ...prev.sponsors,
+                                  [tier]: updatedTier
+                                }
+                              };
+                            })
+                          }
+                        >
+                          {sponsor.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               ))}
             </div>
           )}
