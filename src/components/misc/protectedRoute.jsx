@@ -8,6 +8,8 @@ const ProtectedRoute = ({ children }) => {
   const location = useLocation();
   const isDev = process.env.REACT_APP_DEV_MODE === "true";
 
+  console.log("ProtectedRoute render: token =", !!token, "loading =", loading, "error =", error);
+
   if (loading) {
     return (
       <div className="confirm-auth">
@@ -16,8 +18,8 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  if (!token || error && !isDev) {
-
+  if (!token || (error && !isDev)) {
+    console.log("No token or error, redirecting to /");
     localStorage.setItem("redirect_after_login", location.pathname);
 
     return <Navigate to="/" replace />;

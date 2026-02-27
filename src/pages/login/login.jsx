@@ -39,7 +39,8 @@ const LoginPage = () => {
 
     const validateStored = async () => {
       try {
-        const valid = await login(storedToken); 
+        const valid = await login(storedToken);
+        console.log("Validating stored token: valid =", valid);
         if (valid) {
           setErrorMsg(null);
           const redirectPath =
@@ -47,6 +48,8 @@ const LoginPage = () => {
           localStorage.removeItem("redirect_after_login");
           navigate(redirectPath, { replace: true });
           return;
+        } else {
+          console.log("Stored token invalid, staying on login");
         }
       } catch (e) {
         console.warn("[LoginPage] Stored token invalid:", e.message);

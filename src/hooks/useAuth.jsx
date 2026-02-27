@@ -15,14 +15,18 @@ const isTokenExpired = (token) => {
 
 export const AuthProvider = ({ children }) => {
   const storedToken = localStorage.getItem("gh_jwt");
-  const [token, setToken] = useState(storedToken && !isTokenExpired(storedToken) ? storedToken : null);
-  const [user, setUser] = useState(token ? jwtDecode(token) : null);
+  const validToken = storedToken && !isTokenExpired(storedToken) ? storedToken : null;
+  console.log("AuthProvider init: storedToken =", !!storedToken, "valid =", !!validToken);
+  const [token, setToken] = useState(validToken);
+  const [user, setUser] = useState(validToken ? jwtDecode(validToken) : null);
   const [loading, setLoading] = useState(false);
 
   const login = async (jwt) => {
     if (isTokenExpired(jwt)) {
+      console.log("Login: token expired");
       return false;
     }
+    console.log("Login: setting token");
     setToken(jwt);
     setUser(jwtDecode(jwt));
     localStorage.setItem("gh_jwt", jwt);
@@ -30,6 +34,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    console.log("Logout: clearing session");
     setToken(null);
     setUser(null);
     localStorage.removeItem("gh_jwt");
