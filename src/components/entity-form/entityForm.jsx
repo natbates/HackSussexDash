@@ -380,7 +380,7 @@ export default function EntityForm({
                         }))
                       }
                     >
-                      {sponsor.name} {currentTier && `(${currentTier})`}
+                      {sponsor.name}
                     </button>
                   );
                 })}
