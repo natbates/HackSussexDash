@@ -55,7 +55,7 @@ const processItemWithFiles = async (item, config, jwtToken) => {
 
 export default function EntityManager({ config, refreshKey }) {
   const { token: jwtToken } = useAuth();
-  const { data, loading, addItem, updateItem, deleteItem, refetch } =
+  const { data, loading, addItem, updateItem, deleteItem, refetch, save } =
     useCrud(config?.file, refreshKey);
 
   const [editing, setEditing] = useState(null);
@@ -116,11 +116,18 @@ export default function EntityManager({ config, refreshKey }) {
   const showLess = (key) => setVisibleCount((v) => ({ ...v, [key]: PAGE_SIZE }));
 
   const moveItem = async (item, fromSection, toSection) => {
+    if (!data) return;
+    
     try {
-      // Remove from current section first
-      await deleteItem(item.id, fromSection);
-      // Then add to new section
-      await addItem(item, toSection);
+      // Calculate the new data state
+      const updatedData = {
+        ...data,
+        [fromSection]: data[fromSection].filter((i) => i.id !== item.id),
+        [toSection]: [...(data[toSection] || []), item]
+      };
+      
+      // Save the updated data (this updates local state and saves to server)
+      await save(updatedData);
     } catch (err) {
       console.error("Failed to move item:", err);
       // Revert on error by refetching

@@ -108,6 +108,7 @@ export default function useCrud(filePath, refreshKey = 0) {
     data,
     loading,
     refetch: fetchData,
+    save,
     addItem,
     updateItem,
     deleteItem,
