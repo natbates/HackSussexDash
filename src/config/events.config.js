@@ -67,60 +67,30 @@ export default {
     nested: {
         schedule: {
             label: "Schedule",
-            type: "object",
+            type: "repeatable",
+            min: 0,
+            max: 3,
             fields: [
                 {
-                    name: "day1",
-                    label: "Day 1",
-                    type: "repeatable",
-                    fields: [
-                        {
-                            name: "time",
-                            label: "Time"
-                        },
-                        {
-                            name: "title",
-                            label: "Title"
-                        },
-                        {
-                            name: "description",
-                            label: "Description",
-                            optional: true
-                        }
-                    ]
+                    name: "day",
+                    label: "Day",
+                    required: true
                 },
                 {
-                    name: "day2",
-                    label: "Day 2",
+                    name: "events",
+                    label: "Events",
                     type: "repeatable",
                     fields: [
                         {
                             name: "time",
-                            label: "Time"
+                            label: "Time",
+                            type: "time",
+                            required: true
                         },
                         {
                             name: "title",
-                            label: "Title"
-                        },
-                        {
-                            name: "description",
-                            label: "Description",
-                            optional: true
-                        }
-                    ]
-                },
-                {
-                    name: "day3",
-                    label: "Day 3",
-                    type: "repeatable",
-                    fields: [
-                        {
-                            name: "time",
-                            label: "Time"
-                        },
-                        {
-                            name: "title",
-                            label: "Title"
+                            label: "Title",
+                            required: true
                         },
                         {
                             name: "description",

@@ -81,10 +81,31 @@
   background: var(--secondary-background);
 }
 
-.dayHeader {
+.dayTitleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 0.75rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--container-border-colour);
+}
+
+.dayField {
+  margin-bottom: 1rem;
+}
+
+.dayField label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.dayField input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--secondary-btn-border);
+  background: transparent;
+  color: var(--text-colour);
+  font-size: 0.9rem;
 }
 
 .eventsContainer {
@@ -97,15 +118,13 @@
   border: 1px solid var(--container-border-colour);
   padding: 0.5rem;
   background: var(--container-colour);
+  position: relative;
 }
 
 .eventHeader {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: flex-end;
   margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-  font-weight: 600;
 }
 
 .eventFields {
@@ -133,17 +152,25 @@
   font-size: 0.9rem;
 }
 
+.eventField input[type="time"] {
+  font-family: monospace;
+}
+
+.addScheduleBtn,
+.addDayBtn,
 .addEventBtn {
   background: var(--accent-colour);
   color: white;
   border: none;
-  padding: 0.25rem 0.75rem;
+  padding: 0.5rem 1rem;
   cursor: pointer;
-  font-size: 0.8rem;
-  margin-top: 0.25rem;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
   align-self: flex-start;
 }
 
+.addScheduleBtn:hover,
+.addDayBtn:hover,
 .addEventBtn:hover {
   opacity: 0.8;
 }

@@ -31,15 +31,6 @@ export default function EntityForm({
       Object.entries(config.nested).forEach(([key, nestedConfig]) => {
         if (nestedConfig.type === "repeatable") {
           defaults[key] = [];
-        } else if (nestedConfig.type === "object") {
-          defaults[key] = {};
-          nestedConfig.fields.forEach(f => {
-            if (f.type === "repeatable") {
-              defaults[key][f.name] = [];
-            } else {
-              defaults[key][f.name] = "";
-            }
-          });
         } else {
           defaults[key] = "";
         }
@@ -200,7 +191,8 @@ export default function EntityForm({
   };
 
   const canSave = () => {
-    return config.fields.every(f => {
+    // Check main fields
+    const mainFieldsValid = config.fields.every(f => {
       if (!f.required) return true;
 
       const value = preparedData[f.name];
@@ -215,7 +207,36 @@ export default function EntityForm({
         value !== "" &&
         !(Array.isArray(value) && value.length === 0)
       );
-    }) && hasChanges;
+    });
+
+    // Check nested fields
+    const nestedFieldsValid = !config.nested || Object.entries(config.nested).every(([key, nestedConfig]) => {
+      if (!nestedConfig.required && nestedConfig.min === 0) return true;
+      
+      const value = preparedData[key];
+      if (!value || !Array.isArray(value) || value.length === 0) return false;
+      
+      // Check each item in the array
+      return value.every(item => {
+        // Check day field
+        if (nestedConfig.fields.find(f => f.name === 'day')?.required && (!item.day || item.day.trim() === '')) {
+          return false;
+        }
+        
+        // Check events
+        if (!item.events || !Array.isArray(item.events) || item.events.length === 0) return false;
+        
+        return item.events.every(event => {
+          const eventFields = nestedConfig.fields.find(f => f.name === 'events')?.fields || [];
+          return eventFields.every(field => {
+            if (!field.required) return true;
+            return event[field.name] && event[field.name].trim() !== '';
+          });
+        });
+      });
+    });
+
+    return mainFieldsValid && nestedFieldsValid && hasChanges;
   };
 
 
@@ -420,29 +441,74 @@ export default function EntityForm({
             {nestedConfig.label} {nestedConfig.required && <span className={styles.required}>*</span>}
           </label>
           
-          {nestedConfig.type === "object" && (
+          {nestedConfig.type === "repeatable" && (
             <div className={styles.scheduleContainer}>
-              {nestedConfig.fields.map(dayField => (
-                <div key={dayField.name} className={styles.dayContainer}>
-                  <div className={styles.dayHeader}>
-                    <strong>{dayField.label}</strong>
+              {(data[key] || []).length === 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setData(prev => ({
+                      ...prev,
+                      [key]: [{ day: "", events: [{ time: "", title: "", description: "" }] }]
+                    }));
+                  }}
+                  className={styles.addScheduleBtn}
+                >
+                  + Add Schedule
+                </button>
+              )}
+              
+              {(data[key] || []).map((item, index) => (
+                <div key={index} className={styles.dayContainer}>
+                  <div className={styles.dayTitleRow}>
+                    <strong>Day {index + 1}</strong>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData(prev => ({
+                          ...prev,
+                          [key]: prev[key].filter((_, i) => i !== index)
+                        }));
+                      }}
+                      className={styles.removeBtn}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  
+                  <div className={styles.dayField}>
+                    <label>Day Name</label>
+                    <input
+                      type="text"
+                      value={item.day || ""}
+                      onChange={e => {
+                        setData(prev => {
+                          const newData = { ...prev };
+                          const parentArray = [...(newData[key] || [])];
+                          parentArray[index] = { ...parentArray[index], day: e.target.value };
+                          newData[key] = parentArray;
+                          return newData;
+                        });
+                      }}
+                      placeholder="e.g., Friday, Day 1"
+                      required
+                    />
                   </div>
                   
                   <div className={styles.eventsContainer}>
-                    {(data[key]?.[dayField.name] || []).map((event, eventIndex) => (
+                    {(item.events || []).map((event, eventIndex) => (
                       <div key={eventIndex} className={styles.eventItem}>
                         <div className={styles.eventHeader}>
-                          <span>Event {eventIndex + 1}</span>
                           <button
                             type="button"
                             onClick={() => {
                               setData(prev => {
                                 const newData = { ...prev };
-                                const schedule = { ...newData[key] };
-                                const dayEvents = [...(schedule[dayField.name] || [])];
-                                dayEvents.splice(eventIndex, 1);
-                                schedule[dayField.name] = dayEvents;
-                                newData[key] = schedule;
+                                const parentArray = [...(newData[key] || [])];
+                                const currentItem = { ...parentArray[index] };
+                                currentItem.events = currentItem.events.filter((_, i) => i !== eventIndex);
+                                parentArray[index] = currentItem;
+                                newData[key] = parentArray;
                                 return newData;
                               });
                             }}
@@ -453,26 +519,72 @@ export default function EntityForm({
                         </div>
                         
                         <div className={styles.eventFields}>
-                          {dayField.fields.map(eventField => (
-                            <div key={eventField.name} className={styles.eventField}>
-                              <label>{eventField.label}</label>
-                              <input
-                                type="text"
-                                value={event[eventField.name] || ""}
-                                onChange={e => {
-                                  setData(prev => {
-                                    const newData = { ...prev };
-                                    const schedule = { ...newData[key] };
-                                    const dayEvents = [...(schedule[dayField.name] || [])];
-                                    dayEvents[eventIndex] = { ...dayEvents[eventIndex], [eventField.name]: e.target.value };
-                                    schedule[dayField.name] = dayEvents;
-                                    newData[key] = schedule;
-                                    return newData;
-                                  });
-                                }}
-                              />
-                            </div>
-                          ))}
+                          <div className={styles.eventField}>
+                            <label>Time</label>
+                            <input
+                              type="time"
+                              value={event.time || ""}
+                              onChange={e => {
+                                setData(prev => {
+                                  const newData = { ...prev };
+                                  const parentArray = [...(newData[key] || [])];
+                                  const currentItem = { ...parentArray[index] };
+                                  const eventsArray = [...(currentItem.events || [])];
+                                  eventsArray[eventIndex] = { ...eventsArray[eventIndex], time: e.target.value };
+                                  currentItem.events = eventsArray;
+                                  parentArray[index] = currentItem;
+                                  newData[key] = parentArray;
+                                  return newData;
+                                });
+                              }}
+                              required
+                            />
+                          </div>
+                          
+                          <div className={styles.eventField}>
+                            <label>Title</label>
+                            <input
+                              type="text"
+                              value={event.title || ""}
+                              onChange={e => {
+                                setData(prev => {
+                                  const newData = { ...prev };
+                                  const parentArray = [...(newData[key] || [])];
+                                  const currentItem = { ...parentArray[index] };
+                                  const eventsArray = [...(currentItem.events || [])];
+                                  eventsArray[eventIndex] = { ...eventsArray[eventIndex], title: e.target.value };
+                                  currentItem.events = eventsArray;
+                                  parentArray[index] = currentItem;
+                                  newData[key] = parentArray;
+                                  return newData;
+                                });
+                              }}
+                              placeholder="Event title"
+                              required
+                            />
+                          </div>
+                          
+                          <div className={styles.eventField}>
+                            <label>Description</label>
+                            <input
+                              type="text"
+                              value={event.description || ""}
+                              onChange={e => {
+                                setData(prev => {
+                                  const newData = { ...prev };
+                                  const parentArray = [...(newData[key] || [])];
+                                  const currentItem = { ...parentArray[index] };
+                                  const eventsArray = [...(currentItem.events || [])];
+                                  eventsArray[eventIndex] = { ...eventsArray[eventIndex], description: e.target.value };
+                                  currentItem.events = eventsArray;
+                                  parentArray[index] = currentItem;
+                                  newData[key] = parentArray;
+                                  return newData;
+                                });
+                              }}
+                              placeholder="Optional description"
+                            />
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -482,15 +594,13 @@ export default function EntityForm({
                       onClick={() => {
                         setData(prev => {
                           const newData = { ...prev };
-                          const schedule = { ...newData[key] };
-                          const dayEvents = [...(schedule[dayField.name] || [])];
-                          const newEvent = {};
-                          dayField.fields.forEach(f => {
-                            newEvent[f.name] = "";
-                          });
-                          dayEvents.push(newEvent);
-                          schedule[dayField.name] = dayEvents;
-                          newData[key] = schedule;
+                          const parentArray = [...(newData[key] || [])];
+                          const currentItem = { ...parentArray[index] };
+                          const eventsArray = [...(currentItem.events || [])];
+                          eventsArray.push({ time: "", title: "", description: "" });
+                          currentItem.events = eventsArray;
+                          parentArray[index] = currentItem;
+                          newData[key] = parentArray;
                           return newData;
                         });
                       }}
@@ -501,6 +611,24 @@ export default function EntityForm({
                   </div>
                 </div>
               ))}
+              
+              {(data[key] || []).length > 0 && (data[key] || []).length < nestedConfig.max && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setData(prev => {
+                      const newData = { ...prev };
+                      const parentArray = [...(newData[key] || [])];
+                      parentArray.push({ day: "", events: [{ time: "", title: "", description: "" }] });
+                      newData[key] = parentArray;
+                      return newData;
+                    });
+                  }}
+                  className={styles.addDayBtn}
+                >
+                  + Add Day
+                </button>
+              )}
             </div>
           )}
         </div>
