@@ -55,7 +55,7 @@ const processItemWithFiles = async (item, config, jwtToken) => {
 
 export default function EntityManager({ config, refreshKey }) {
   const { token: jwtToken } = useAuth();
-  const { data, loading, addItem, updateItem, deleteItem } =
+  const { data, loading, addItem, updateItem, deleteItem, refetch } =
     useCrud(config?.file, refreshKey);
 
   const [editing, setEditing] = useState(null);
@@ -145,7 +145,7 @@ export default function EntityManager({ config, refreshKey }) {
     } catch (err) {
       console.error("Failed to move item:", err);
       // Revert on error by refetching
-      fetchData();
+      refetch();
     }
   };
 
