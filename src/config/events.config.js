@@ -67,17 +67,51 @@ export default {
     nested: {
         schedule: {
             label: "Schedule",
-            type: "repeatable",
-            min: 1,
-            max: 3,
+            type: "object",
             fields: [
                 {
-                    name: "day",
-                    label: "Day"
+                    name: "day1",
+                    label: "Day 1",
+                    type: "repeatable",
+                    fields: [
+                        {
+                            name: "time",
+                            label: "Time"
+                        },
+                        {
+                            name: "title",
+                            label: "Title"
+                        },
+                        {
+                            name: "description",
+                            label: "Description",
+                            optional: true
+                        }
+                    ]
                 },
                 {
-                    name: "events",
-                    label: "Events",
+                    name: "day2",
+                    label: "Day 2",
+                    type: "repeatable",
+                    fields: [
+                        {
+                            name: "time",
+                            label: "Time"
+                        },
+                        {
+                            name: "title",
+                            label: "Title"
+                        },
+                        {
+                            name: "description",
+                            label: "Description",
+                            optional: true
+                        }
+                    ]
+                },
+                {
+                    name: "day3",
+                    label: "Day 3",
                     type: "repeatable",
                     fields: [
                         {

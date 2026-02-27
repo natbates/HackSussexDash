@@ -68,58 +68,83 @@
 }
 
 
-.repeatableContainer {
+.scheduleContainer {
   display: flex;
   flex-direction: column;
   gap: 1rem;
   margin-top: 10px;
 }
 
-.repeatableItem {
+.dayContainer {
   border: 1px solid var(--secondary-btn-border);
-  padding: 1rem;
+  padding: 0.75rem;
   background: var(--secondary-background);
 }
 
-.repeatableHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
+.dayHeader {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--container-border-colour);
 }
 
-.repeatableSubContainer {
+.eventsContainer {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 10px;
+  gap: 0.5rem;
 }
 
-.repeatableSubItem {
+.eventItem {
   border: 1px solid var(--container-border-colour);
-  padding: 0.75rem;
+  padding: 0.5rem;
   background: var(--container-colour);
 }
 
-.repeatableSubHeader {
+.eventHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.eventFields {
+  display: grid;
+  grid-template-columns: 1fr 2fr 2fr;
+  gap: 0.5rem;
+}
+
+.eventField {
+  display: flex;
+  flex-direction: column;
+}
+
+.eventField label {
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.eventField input {
+  padding: 0.25rem;
+  border: 1px solid var(--secondary-btn-border);
+  background: transparent;
+  color: var(--text-colour);
   font-size: 0.9rem;
 }
 
-.addBtn {
+.addEventBtn {
   background: var(--accent-colour);
   color: white;
   border: none;
-  padding: 0.5rem 1rem;
+  padding: 0.25rem 0.75rem;
   cursor: pointer;
-  margin-top: 0.5rem;
-  border-radius: 4px;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  align-self: flex-start;
 }
 
-.addBtn:hover {
+.addEventBtn:hover {
   opacity: 0.8;
 }
 
@@ -127,10 +152,10 @@
   background: #c00;
   color: white;
   border: none;
-  padding: 0.25rem 0.5rem;
+  padding: 0.125rem 0.25rem;
   cursor: pointer;
-  border-radius: 4px;
   font-size: 0.8rem;
+  line-height: 1;
 }
 
 .removeBtn:hover {
