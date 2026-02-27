@@ -54,11 +54,11 @@ export default function EntityManager({ config, refreshKey }) {
           throw new Error("Session expired. Please log in again.");
         }
 
+        const text = await res.text();
         let json;
         try {
-          json = await res.json();
+          json = JSON.parse(text);
         } catch (e) {
-          const text = await res.text();
           console.error("Upload response not JSON:", text);
           throw new Error(`Upload failed: ${res.status} ${res.statusText} - ${text}`);
         }
