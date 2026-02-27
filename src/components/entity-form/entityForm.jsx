@@ -366,7 +366,7 @@ export default function EntityForm({
           onClick={submit}
           disabled={!canSave() || submitting}
         >
-          Save
+          {isEditing ? "Save" : "Create"}
         </button>
       </div>
     </div>
