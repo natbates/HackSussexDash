@@ -88,26 +88,6 @@
   margin-bottom: 0.75rem;
 }
 
-.dayField {
-  margin-bottom: 1rem;
-}
-
-.dayField label {
-  display: block;
-  font-size: 0.9rem;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-}
-
-.dayField input {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid var(--secondary-btn-border);
-  background: transparent;
-  color: var(--text-colour);
-  font-size: 0.9rem;
-}
-
 .eventsContainer {
   display: flex;
   flex-direction: column;

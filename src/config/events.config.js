@@ -72,11 +72,6 @@ export default {
             max: 3,
             fields: [
                 {
-                    name: "day",
-                    label: "Day",
-                    required: true
-                },
-                {
                     name: "events",
                     label: "Events",
                     type: "repeatable",

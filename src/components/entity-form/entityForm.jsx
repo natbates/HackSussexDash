@@ -218,11 +218,6 @@ export default function EntityForm({
       
       // Check each item in the array
       return value.every(item => {
-        // Check day field
-        if (nestedConfig.fields.find(f => f.name === 'day')?.required && (!item.day || item.day.trim() === '')) {
-          return false;
-        }
-        
         // Check events
         if (!item.events || !Array.isArray(item.events) || item.events.length === 0) return false;
         
@@ -449,7 +444,7 @@ export default function EntityForm({
                   onClick={() => {
                     setData(prev => ({
                       ...prev,
-                      [key]: [{ day: "", events: [{ time: "", title: "", description: "" }] }]
+                      [key]: [{ events: [{ time: "", title: "", description: "" }] }]
                     }));
                   }}
                   className={styles.addScheduleBtn}
@@ -474,25 +469,6 @@ export default function EntityForm({
                     >
                       ×
                     </button>
-                  </div>
-                  
-                  <div className={styles.dayField}>
-                    <label>Day Name</label>
-                    <input
-                      type="text"
-                      value={item.day || ""}
-                      onChange={e => {
-                        setData(prev => {
-                          const newData = { ...prev };
-                          const parentArray = [...(newData[key] || [])];
-                          parentArray[index] = { ...parentArray[index], day: e.target.value };
-                          newData[key] = parentArray;
-                          return newData;
-                        });
-                      }}
-                      placeholder="e.g., Friday, Day 1"
-                      required
-                    />
                   </div>
                   
                   <div className={styles.eventsContainer}>
@@ -520,7 +496,7 @@ export default function EntityForm({
                         
                         <div className={styles.eventFields}>
                           <div className={styles.eventField}>
-                            <label>Time</label>
+                            <label>Time <span className={styles.required}>*</span></label>
                             <input
                               type="time"
                               value={event.time || ""}
@@ -542,7 +518,7 @@ export default function EntityForm({
                           </div>
                           
                           <div className={styles.eventField}>
-                            <label>Title</label>
+                            <label>Title <span className={styles.required}>*</span></label>
                             <input
                               type="text"
                               value={event.title || ""}
@@ -619,7 +595,7 @@ export default function EntityForm({
                     setData(prev => {
                       const newData = { ...prev };
                       const parentArray = [...(newData[key] || [])];
-                      parentArray.push({ day: "", events: [{ time: "", title: "", description: "" }] });
+                      parentArray.push({ events: [{ time: "", title: "", description: "" }] });
                       newData[key] = parentArray;
                       return newData;
                     });
