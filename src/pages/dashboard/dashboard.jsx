@@ -23,16 +23,12 @@ export default function Dashboard() {
         </button>
       </div>
 
-      <h2>Committee</h2>
       <EntityManager config={committee} refreshKey={refreshKey} />
 
-      <h2>Events</h2>
       <EntityManager config={events} refreshKey={refreshKey} />
 
-      <h2>Sponsors</h2>
       <EntityManager config={sponsors} refreshKey={refreshKey} />
 
-      <h2>Site Data</h2>
       <EntityManager config={siteData} refreshKey={refreshKey} />
     </div>
   );

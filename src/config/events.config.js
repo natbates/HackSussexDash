@@ -14,7 +14,7 @@ const EVENT_TYPES = [
 export default {
     file: "src/config/events.json",
     mode: "sectioned",
-    label: "Event",
+    label: "Events",
     imagePath: "public/config_images/events",
 
     sections: [
@@ -24,6 +24,9 @@ export default {
 
     fields: [
         { name: "title", label: "Title", required: true },
+
+        // new checkbox determines whether this event belongs in the past section
+        { name: "past", label: "Past event", type: "boolean" },
 
         { name: "date", label: "Date", type: "date", required: true },
 

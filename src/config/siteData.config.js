@@ -6,6 +6,7 @@ import {
 export default {
     file: "src/config/siteData.json",
     mode: "singleton",
+    label: "Site Data",
 
     fields: [
         { name: "discord", label: "Discord", required: true },

@@ -9,8 +9,10 @@ export default function useCrud(filePath, refreshKey = 0) {
   const { fetchWithAuth } = useApi();
 
   const fetchData = useCallback(async () => {
+    console.log("useCrud: fetching", filePath);
     if (!filePath || !jwtToken) {
       setData(null);
+      console.log("useCrud: no filePath or no JWT token, skipping");
       return;
     }
 
@@ -23,6 +25,7 @@ export default function useCrud(filePath, refreshKey = 0) {
       });
 
       const result = await res.json();
+      console.log("useCrud: fetched result", result);
 
       if (!res.ok) {
         if (res.status === 401) {
@@ -30,9 +33,14 @@ export default function useCrud(filePath, refreshKey = 0) {
         }
         throw new Error(result.error || "Failed to fetch file");
       }
-      setData(result.data.data);
+      // some of our lambdas wrap the JSON under `data.data`, others just
+      // return the value directly (e.g. singletons). normalize here so
+      // siteData.json doesn’t disappear.
+      const payload = result.data?.data ?? result.data;
+      console.log("useCrud: setting data", payload);
+      setData(payload);
     } catch (err) {
-      console.error("Failed to fetch:", filePath, err);
+      console.error("useCrud: Failed to fetch", filePath, err);
     } finally {
       setLoading(false);
     }

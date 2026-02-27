@@ -60,6 +60,7 @@ export default function EntityForm({
   };
 
   const [data, setData] = useState(() => {
+    console.log("EntityForm: initializing data", initialData);
     const defaults = buildDefaults();
     const merged = { ...defaults, ...initialData };
     
@@ -85,6 +86,7 @@ export default function EntityForm({
 
   const [errors, setErrors] = useState({});
   const [fileUploads, setFileUploads] = useState({});
+  const [previews, setPreviews] = useState({}); // object field->objectURL for new files
   const [submitting, setSubmitting] = useState(false);
 
   const isEditing = Boolean(initialData?.id);
@@ -184,6 +186,9 @@ export default function EntityForm({
     setData(originalData);
     setErrors({});
     setFileUploads({});
+    // revoke any object URLs we created
+    Object.values(previews).forEach(url => URL.revokeObjectURL(url));
+    setPreviews({});
   };
 
   const handleCancel = () => {
@@ -335,10 +340,11 @@ export default function EntityForm({
 
           {f.type === "file" && (
             <>
-              {data[f.name] && typeof data[f.name] === "string" && (
+              {/* show existing url or preview of newly chosen file */}
+              {( (data[f.name] && typeof data[f.name] === "string") || previews[f.name] ) && (
                 <div className={styles.preview}>
                   <img
-                    src={data[f.name]}
+                    src={previews[f.name] || data[f.name]}
                     alt="Preview"
                     className={styles.previewImage}
                   />
@@ -354,6 +360,9 @@ export default function EntityForm({
                     ...prev,
                     [f.name]: file
                   }));
+                  // create a temporary preview URL
+                  const url = URL.createObjectURL(file);
+                  setPreviews(prev => ({ ...prev, [f.name]: url }));
                 }}
               />
             </>
@@ -443,6 +452,26 @@ export default function EntityForm({
           
           {nestedConfig.type === "repeatable" && (
             <div className={styles.scheduleContainer}>
+              <div className={styles.scheduleHeader}>
+                {/* header only shows button now; outer <label> provides the title */}
+                { (data[key] || []).length > 0 && (data[key] || []).length < nestedConfig.max && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setData(prev => {
+                        const newData = { ...prev };
+                        const parentArray = [...(newData[key] || [])];
+                        parentArray.push({ events: [{ time: "", title: "", description: "" }] });
+                        newData[key] = parentArray;
+                        return newData;
+                      });
+                    }}
+                    className={styles.addDayBtn}
+                  >
+                    + Add Day
+                  </button>
+                )}
+              </div>
               {(data[key] || []).length === 0 && (
                 <button
                   type="button"
@@ -593,23 +622,6 @@ export default function EntityForm({
                 </div>
               ))}
               
-              {(data[key] || []).length > 0 && (data[key] || []).length < nestedConfig.max && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setData(prev => {
-                      const newData = { ...prev };
-                      const parentArray = [...(newData[key] || [])];
-                      parentArray.push({ events: [{ time: "", title: "", description: "" }] });
-                      newData[key] = parentArray;
-                      return newData;
-                    });
-                  }}
-                  className={styles.addDayBtn}
-                >
-                  + Add Day
-                </button>
-              )}
             </div>
           )}
         </div>

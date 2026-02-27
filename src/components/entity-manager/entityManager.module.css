@@ -5,12 +5,33 @@
   margin-top: 13px;
 }
 
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.collapseBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-colour);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+}
+
+.collapseBtn:hover {
+  color: var(--accent-colour);
+  background-color: transparent !important;
+}
+
 .controls {
   display: flex;
   gap: 1rem;
   margin-bottom: 1.5rem;
   height: fit-content;
   flex-wrap: wrap;
+  margin-top: 20px;
 }
 
 .search {

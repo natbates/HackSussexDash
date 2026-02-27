@@ -42,6 +42,8 @@
 .field textarea {
   word-wrap: break-word;
   overflow-wrap: break-word;
+  white-space: pre-wrap;           /* preserve line breaks and wrap long words */
+  overflow-x: hidden;             /* avoid horizontal scrollbar */
   resize: vertical;
 }
 
@@ -75,10 +77,20 @@
   margin-top: 10px;
 }
 
+.scheduleHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.scheduleHeader span {
+  font-weight: 600;
+}
+
 .dayContainer {
-  border: 1px solid var(--secondary-btn-border);
-  padding: 0.75rem;
-  background: var(--secondary-background);
+  background: transparent;
 }
 
 .dayTitleRow {
@@ -97,12 +109,14 @@
 .eventItem {
   border: 1px solid var(--container-border-colour);
   padding: 0.5rem;
-  background: var(--container-colour);
   position: relative;
 }
 
 .eventHeader {
   display: flex;
+  position: absolute;
+  top: 10;
+  right: 10;
   justify-content: flex-end;
   margin-bottom: 0.5rem;
 }
@@ -111,6 +125,20 @@
   display: grid;
   grid-template-columns: 1fr 2fr 2fr;
   gap: 0.5rem;
+}
+
+/* make schedule inputs stack on narrow viewports */
+@media (max-width: 600px) {
+  .eventFields {
+    grid-template-columns: 1fr;
+  }
+
+  .addScheduleBtn,
+  .addDayBtn,
+  .addEventBtn {
+    width: 100%;
+    text-align: center;
+  }
 }
 
 .eventField {
@@ -136,6 +164,11 @@
   font-family: monospace;
 }
 
+.addDayBtn
+{
+  width: fit-content;
+}
+
 .addScheduleBtn,
 .addDayBtn,
 .addEventBtn {
@@ -156,18 +189,15 @@
 }
 
 .removeBtn {
-  background: #c00;
   color: white;
   border: none;
+  background: transparent;
   padding: 0.125rem 0.25rem;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 1.2rem;
   line-height: 1;
 }
 
-.removeBtn:hover {
-  background: #a00;
-}
 
 .repeatableSubItem {
   display: flex;
@@ -227,7 +257,7 @@
 }
 
 .legend {
-  display: flex;
+  display: none;
   flex-direction: column;
   gap: 0.5rem;
   font-size: 0.9rem;

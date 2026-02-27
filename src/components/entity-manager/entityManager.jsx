@@ -26,8 +26,11 @@ export default function EntityManager({ config, refreshKey }) {
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({});
   const [visibleCount, setVisibleCount] = useState({});
+  const [collapsed, setCollapsed] = useState(false); // whether the container is collapsed
 
   const processItemWithFiles = async (item, config, jwtToken) => {
+    // always return a copy of the item; if there are files we upload them
+    // first and replace the corresponding fields with URLs.
     const processed = { ...item };
 
     if (item._files && config?.imagePath) {
@@ -47,40 +50,39 @@ export default function EntityManager({ config, refreshKey }) {
             body: JSON.stringify({ path, base64 }),
           });
 
-        console.log("Upload response status:", res.status);
+          console.log("Upload response status:", res.status);
 
-        if (res.status === 401) {
-          logout();
-          throw new Error("Session expired. Please log in again.");
-        }
+          if (res.status === 401) {
+            logout();
+            throw new Error("Session expired. Please log in again.");
+          }
 
-        const text = await res.text();
-        let json;
-        try {
-          json = JSON.parse(text);
-        } catch (e) {
-          console.error("Upload response not JSON:", text);
-          throw new Error(`Upload failed: ${res.status} ${res.statusText} - ${text}`);
-        }
+          const text = await res.text();
+          let json;
+          try {
+            json = JSON.parse(text);
+          } catch (e) {
+            console.error("Upload response not JSON:", text);
+            throw new Error(`Upload failed: ${res.status} ${res.statusText} - ${text}`);
+          }
 
-        if (!res.ok || json.error) {
-          console.error("Upload failed:", json);
-          throw new Error(json.error || "Upload failed");
-        }
+          if (!res.ok || json.error) {
+            console.error("Upload failed:", json);
+            throw new Error(json.error || "Upload failed");
+          }
 
-        processed[field] = json.url;
-
-    delete processed._files;
-    return processed;
-        }
-        catch (err) {
-          console.error("Failed to upload file for field", field, err)
-          throw new Error(`Failed to upload file for field ${field}: ${err.message}`)
+          processed[field] = json.url;
+        } catch (err) {
+          console.error("Failed to upload file for field", field, err);
+          throw new Error(`Failed to upload file for field ${field}: ${err.message}`);
         }
       }
-    
-    return processed;
+
+      // tidy up after all uploads
+      delete processed._files;
     }
+
+    return processed;
   };
 
   const matchesSearch = (item) => {
@@ -130,24 +132,19 @@ export default function EntityManager({ config, refreshKey }) {
     setVisibleCount((v) => ({ ...v, [key]: (v[key] ?? PAGE_SIZE) + PAGE_SIZE }));
   const showLess = (key) => setVisibleCount((v) => ({ ...v, [key]: PAGE_SIZE }));
 
-  const moveItem = async (item, fromSection, toSection) => {
-    if (!data) return;
-    
-    try {
-      // Calculate the new data state
-      const updatedData = {
-        ...data,
-        [fromSection]: data[fromSection].filter((i) => i.id !== item.id),
-        [toSection]: [...(data[toSection] || []), item]
-      };
-      
-      // Save the updated data (this updates local state and saves to server)
-      await save(updatedData);
-    } catch (err) {
-      console.error("Failed to move item:", err);
-      // Revert on error by refetching
-      refetch();
+  // helper to work out which section an item should live in when the
+  // config uses the two standard event sections.  If the boolean
+  // "past" field is present, we send to pastEvents when truthy,
+  // otherwise upcomingEvents.  Returns undefined for other configs.
+  const determineSection = (item) => {
+    if (
+      config?.sections?.length === 2 &&
+      config.sections.some((s) => s.key === "pastEvents") &&
+      config.sections.some((s) => s.key === "upcomingEvents")
+    ) {
+      return item?.past ? "pastEvents" : "upcomingEvents";
     }
+    return undefined;
   };
 
 
@@ -165,7 +162,25 @@ export default function EntityManager({ config, refreshKey }) {
             onSave={async (updated) => {
               try {
                 const processed = await processItemWithFiles(updated, config, jwtToken);
-                await updateItem(processed.id, processed, currentAction.item.section);
+                // figure out which section we should persist it under
+                const newSection = determineSection(processed) ?? currentAction.item.section;
+
+                // if the section changed we need to move the record manually;
+                // updateItem only replaces within a single section and won't
+                // remove the old copy for us.
+                if (newSection !== currentAction.item.section) {
+                  // build a fresh dataset by removing from old and adding to new
+                  const updatedData = {
+                    ...data,
+                    [currentAction.item.section]: data[currentAction.item.section].filter(
+                      (i) => i.id !== processed.id
+                    ),
+                    [newSection]: [...(data[newSection] || []), processed],
+                  };
+                  await save(updatedData);
+                } else {
+                  await updateItem(processed.id, processed, newSection);
+                }
                 setCurrentAction(null);
               } catch (err) {
                 console.error("Failed to save edited item:", err);
@@ -182,27 +197,12 @@ export default function EntityManager({ config, refreshKey }) {
           <strong>{item.name ?? item.title ?? "Untitled"}</strong>
           <span className={styles.line}></span>
           <div className={styles.actions}>
-            {config.label?.toLowerCase().includes('event') && section === 'pastEvents' && (
-              <button 
-                className="secondary"
-                onClick={() => moveItem(item, 'pastEvents', 'upcomingEvents')}
-              >
-                Move to Upcoming
-              </button>
-            )}
-            {config.label?.toLowerCase().includes('event') && section === 'upcomingEvents' && (
-              <button 
-                className="secondary"
-                onClick={() => moveItem(item, 'upcomingEvents', 'pastEvents')}
-              >
-                Move to Past
-              </button>
-            )}
             <button
               className="secondary"
               onClick={() => {
                 if (currentAction && isFormDirty && !confirm("You have unsaved changes in the current form. Do you want to discard them?")) return;
-                setCurrentAction({ type: 'edit', item: { ...item, section } });
+                // include the `past` flag so the form checkbox is accurate
+                setCurrentAction({ type: 'edit', item: { ...item, section, past: section === 'pastEvents' } });
               }}
             >
               Edit
@@ -282,23 +282,41 @@ export default function EntityManager({ config, refreshKey }) {
     );
   };
 
+  const renderHeader = () => (
+    <div className={styles.header}>
+      <h2 className={styles.title}>{config.label || "Item"}</h2>
+      <button
+        className={styles.collapseBtn}
+        onClick={() => setCollapsed((c) => !c)}
+        aria-label={collapsed ? "Expand" : "Collapse"}
+      >
+        {collapsed ? "▼" : "▲"}
+      </button>
+    </div>
+  );
+
   if (config?.mode === "singleton") {
     return (
       <div className={styles.manager}>
-        {renderControls()}
-        <EntityForm
-          config={config}
-          initialData={data}
-          onCancel={() => {}}
-          onSave={async (updated) => {
-            try {
-              const processed = await processItemWithFiles(updated, config, jwtToken);
-              await updateItem(null, processed);
-            } catch (err) {
-              console.error("Failed to save singleton item:", err);
-            }
-          }}
-        />
+        {renderHeader()}
+        {!collapsed && (
+          <>
+            {renderControls()}
+            <EntityForm
+              config={config}
+              initialData={data}
+              onCancel={() => {}}
+              onSave={async (updated) => {
+                try {
+                  const processed = await processItemWithFiles(updated, config, jwtToken);
+                  await updateItem(null, processed);
+                } catch (err) {
+                  console.error("Failed to save singleton item:", err);
+                }
+              }}
+            />
+          </>
+        )}
       </div>
     );
   }
@@ -309,36 +327,43 @@ export default function EntityManager({ config, refreshKey }) {
 
     return (
       <div className={styles.manager}>
-        {renderControls()}
+        {renderHeader()}
+        {!collapsed && (
+          <>
+            {renderControls()}
 
-        {currentAction?.type === 'add' && currentAction.section === ROOT && (
-          <EntityForm
-            config={config}
-            onCancel={() => setCurrentAction(null)}
-            onDirtyChange={setIsFormDirty}
-            onSave={async (item) => {
-              try {
-                const processed = await processItemWithFiles(item, config, jwtToken);
-                await addItem(processed);
-                setCurrentAction(null);
-              } catch (err) {
-                console.error("Failed to add item:", err);
-              }
-            }}
-          />
-        )}
+            {currentAction?.type === 'add' && currentAction.section === ROOT && (
+              <EntityForm
+                config={config}
+                onCancel={() => setCurrentAction(null)}
+                onDirtyChange={setIsFormDirty}
+                onSave={async (item) => {
+                  try {
+                    const processed = await processItemWithFiles(item, config, jwtToken);
+                    const targetSection = determineSection(processed);
+                    if (targetSection) await addItem(processed, targetSection);
+                    else await addItem(processed);
+                    setCurrentAction(null);
+                  } catch (err) {
+                    console.error("Failed to add item:", err);
+                  }
+                }}
+              />
+            )}
 
-        {visible.map((item) => renderRow(item))}
+            {visible.map((item) => renderRow(item))}
 
-        {items.length > PAGE_SIZE && (
-          <div className={styles.pagination}>
-            <button onClick={() => showMore(ROOT)} disabled={!canShowMore(items, ROOT)}>
-              Show more
-            </button>
-            <button onClick={() => showLess(ROOT)} disabled={!canShowLess(ROOT)}>
-              Show less
-            </button>
-          </div>
+            {items.length > PAGE_SIZE && (
+              <div className={styles.pagination}>
+                <button onClick={() => showMore(ROOT)} disabled={!canShowMore(items, ROOT)}>
+                  Show more
+                </button>
+                <button onClick={() => showLess(ROOT)} disabled={!canShowLess(ROOT)}>
+                  Show less
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     );
@@ -347,59 +372,66 @@ export default function EntityManager({ config, refreshKey }) {
   if (config?.mode === "sectioned") {
     return (
       <div className={styles.manager}>
-        {renderControls()}
+        {renderHeader()}
+        {!collapsed && (
+          <>
+            {renderControls()}
 
-        {(config.sections ?? []).map((sec) => {
-          const items = filteredData[sec.key] ?? [];
-          const visible = getVisible(items, sec.key);
+            {(config.sections ?? []).map((sec) => {
+              const items = filteredData[sec.key] ?? [];
+              const visible = getVisible(items, sec.key);
 
-          return (
-            <div key={sec.key} className={styles.section}>
-              <div className={styles.sectionTop}>
-                <h3>{sec.label}</h3>
-                {!(currentAction?.type === 'add' && currentAction.section === sec.key) && (
-                  <button onClick={() => {
-                    if (currentAction && isFormDirty && !confirm("You have unsaved changes in the current form. Do you want to discard them?")) return;
-                    setCurrentAction({ type: 'add', section: sec.key });
-                  }}>+ Add</button>
-                )}
-              </div>
+              return (
+                <div key={sec.key} className={styles.section}>
+                  <div className={styles.sectionTop}>
+                    <h3>{sec.label}</h3>
+                    {!(currentAction?.type === 'add' && currentAction.section === sec.key) && (
+                      <button onClick={() => {
+                        if (currentAction && isFormDirty && !confirm("You have unsaved changes in the current form. Do you want to discard them?")) return;
+                        setCurrentAction({ type: 'add', section: sec.key });
+                      }}>+ Add</button>
+                    )}
+                  </div>
 
-              {currentAction?.type === 'add' && currentAction.section === sec.key && (
-                <div className={styles.sectionForm}>
-                  <EntityForm
-                    config={config}
-                    onCancel={() => setCurrentAction(null)}
-                    onDirtyChange={setIsFormDirty}
-                    onSave={async (item) => {
-                      try {
-                        const processed = await processItemWithFiles(item, config, jwtToken);
-                        await addItem(processed, sec.key);
-                        setCurrentAction(null);
-                      } catch (err) {
-                        console.error(`Failed to add item in section ${sec.key}:`, err);
-                      }
-                    }}
-                  />
+                  {currentAction?.type === 'add' && currentAction.section === sec.key && (
+                    <div className={styles.sectionForm}>
+                      <EntityForm
+                        config={config}
+                        onCancel={() => setCurrentAction(null)}
+                        onDirtyChange={setIsFormDirty}
+                        onSave={async (item) => {
+                          try {
+                            const processed = await processItemWithFiles(item, config, jwtToken);
+                            // for event configuration we ignore the sec.key and use the
+                            // checkbox to determine actual section
+                            const targetSection = determineSection(processed) ?? sec.key;
+                            await addItem(processed, targetSection);
+                            setCurrentAction(null);
+                          } catch (err) {
+                            console.error(`Failed to add item in section ${sec.key}:`, err);
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {visible.map((item) => renderRow(item, sec.key))}
+
+                  {items.length > PAGE_SIZE && (
+                    <div className={styles.pagination}>
+                      <button onClick={() => showMore(sec.key)} disabled={!canShowMore(items, sec.key)}>
+                        Show more
+                      </button>
+                      <button onClick={() => showLess(sec.key)} disabled={!canShowLess(sec.key)}>
+                        Show less
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
-
-              
-              {visible.map((item) => renderRow(item, sec.key))}
-
-              {items.length > PAGE_SIZE && (
-                <div className={styles.pagination}>
-                  <button onClick={() => showMore(sec.key)} disabled={!canShowMore(items, sec.key)}>
-                    Show more
-                  </button>
-                  <button onClick={() => showLess(sec.key)} disabled={!canShowLess(sec.key)}>
-                    Show less
-                  </button>
-                </div>
-              )}
-            </div>
-          );
-        })}
+              );
+            })}
+          </>
+        )}
       </div>
     );
   }

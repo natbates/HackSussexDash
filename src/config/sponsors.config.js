@@ -4,6 +4,7 @@ export default {
     file: "src/config/sponsors.json",
     mode: "collection",
     imagePath: "public/config_images/sponsors",
+    label: "Sponsors",
 
     fields: [
         { name: "name", label: "Name", required: true },

@@ -25,7 +25,7 @@ const ROLE_OPTIONS = [
 export default {
     file: "src/config/committee.json",
     mode: "collection",
-    label: "Committee Member",
+    label: "Committee",
     imagePath: "public/config_images/committee",
 
     fields: [
