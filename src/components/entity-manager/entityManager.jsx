@@ -102,7 +102,7 @@ export default function EntityManager({ config, refreshKey }) {
     if (config.mode === "sectioned") {
       const out = {};
       (config.sections ?? []).forEach((sec) => {
-        out[sec.key] = filterItems(data[sec.key] ?? []);
+        out[sec.key] = filterItems(data?.[sec.key] ?? []);
       });
       return out;
     }

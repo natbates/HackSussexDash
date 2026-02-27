@@ -24,7 +24,12 @@ export default function useCrud(filePath, refreshKey = 0) {
 
       const result = await res.json();
 
-      if (!res.ok) throw new Error(result.error || "Failed to fetch file");
+      if (!res.ok) {
+        if (res.status === 401) {
+          logout();
+        }
+        throw new Error(result.error || "Failed to fetch file");
+      }
       setData(result.data.data);
     } catch (err) {
       console.error("Failed to fetch:", filePath, err);
