@@ -116,13 +116,36 @@ export default function EntityManager({ config, refreshKey }) {
   const showLess = (key) => setVisibleCount((v) => ({ ...v, [key]: PAGE_SIZE }));
 
   const moveItem = async (item, fromSection, toSection) => {
+    if (!data) return;
+    
     try {
-      // Remove from current section
-      await deleteItem(item.id, fromSection);
-      // Add to new section
-      await addItem(item, toSection);
+      // Perform both operations in a single save to avoid race conditions
+      const updatedData = {
+        ...data,
+        [fromSection]: data[fromSection].filter((i) => i.id !== item.id),
+        [toSection]: [...(data[toSection] || []), item]
+      };
+      
+      setData(updatedData);
+      
+      // Save to server
+      const res = await fetch("/.netlify/functions/write-json", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${jwtToken}`,
+        },
+        body: JSON.stringify({ path: config.file, data: updatedData }),
+      });
+
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result.error || "Failed to move item");
+      }
     } catch (err) {
       console.error("Failed to move item:", err);
+      // Revert on error by refetching
+      fetchData();
     }
   };
 
@@ -159,7 +182,7 @@ export default function EntityManager({ config, refreshKey }) {
           <div className={styles.actions}>
             {config.label?.toLowerCase().includes('event') && section === 'pastEvents' && (
               <button 
-                className={styles.moveButton}
+                className="secondary"
                 onClick={() => moveItem(item, 'pastEvents', 'upcomingEvents')}
               >
                 Move to Upcoming
@@ -167,7 +190,7 @@ export default function EntityManager({ config, refreshKey }) {
             )}
             {config.label?.toLowerCase().includes('event') && section === 'upcomingEvents' && (
               <button 
-                className={styles.moveButton}
+                className="secondary"
                 onClick={() => moveItem(item, 'upcomingEvents', 'pastEvents')}
               >
                 Move to Past
