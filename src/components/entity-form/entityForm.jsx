@@ -8,7 +8,8 @@ export default function EntityForm({
   config,
   initialData = {},
   onSave,
-  onCancel
+  onCancel,
+  onDirtyChange
 }) {
   const buildDefaults = () => {
     const defaults = {};
@@ -112,6 +113,10 @@ export default function EntityForm({
   const hasChanges =
     JSON.stringify(preparedData) !== JSON.stringify(originalData) ||
     Object.keys(fileUploads).length > 0;
+
+  useEffect(() => {
+    onDirtyChange?.(hasChanges);
+  }, [hasChanges, onDirtyChange]);
 
   // Prevent accidental navigation away with unsaved changes
   useEffect(() => {

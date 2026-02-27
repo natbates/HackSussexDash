@@ -16,7 +16,7 @@ const toBase64 = (file) =>
     reader.onerror = reject;
   });
 
-const processItemWithFiles = async (item, config, jwtToken) => {
+const processItemWithFiles = async (item, config, jwtToken, logout) => {
   const processed = { ...item };
 
   if (item._files && config?.imagePath) {
@@ -35,6 +35,11 @@ const processItemWithFiles = async (item, config, jwtToken) => {
           },
           body: JSON.stringify({ path, base64 }),
         });
+
+        if (res.status === 401) {
+          logout();
+          throw new Error("Session expired. Please log in again.");
+        }
 
         const json = await res.json();
         if (!res.ok || json.error) {
@@ -58,8 +63,8 @@ export default function EntityManager({ config, refreshKey }) {
   const { data, loading, addItem, updateItem, deleteItem, refetch, save } =
     useCrud(config?.file, refreshKey);
 
-  const [editing, setEditing] = useState(null);
-  const [addingKey, setAddingKey] = useState(null);
+  const [currentAction, setCurrentAction] = useState(null); // { type: 'edit' | 'add', item?: ..., section?: ... }
+  const [isFormDirty, setIsFormDirty] = useState(false);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({});
   const [visibleCount, setVisibleCount] = useState({});
@@ -139,18 +144,19 @@ export default function EntityManager({ config, refreshKey }) {
   const renderRow = (item, section = null) => {
     if (!item) return null;
 
-    if (editing?.id === item.id) {
+    if (currentAction?.type === 'edit' && currentAction.item?.id === item.id) {
       return (
         <div key={item.id} className={styles.row}>
           <EntityForm
             config={config}
-            initialData={editing}
-            onCancel={() => setEditing(null)}
+            initialData={currentAction.item}
+            onCancel={() => setCurrentAction(null)}
+            onDirtyChange={setIsFormDirty}
             onSave={async (updated) => {
               try {
-                const processed = await processItemWithFiles(updated, config, jwtToken);
-                await updateItem(processed.id, processed, editing.section);
-                setEditing(null);
+                const processed = await processItemWithFiles(updated, config, jwtToken, logout);
+                await updateItem(processed.id, processed, currentAction.item.section);
+                setCurrentAction(null);
               } catch (err) {
                 console.error("Failed to save edited item:", err);
               }
@@ -184,7 +190,10 @@ export default function EntityManager({ config, refreshKey }) {
             )}
             <button
               className="secondary"
-              onClick={() => setEditing({ ...item, section })}
+              onClick={() => {
+                if (currentAction && isFormDirty && !confirm("You have unsaved changes in the current form. Do you want to discard them?")) return;
+                setCurrentAction({ type: 'edit', item: { ...item, section } });
+              }}
             >
               Edit
             </button>
@@ -255,7 +264,10 @@ export default function EntityManager({ config, refreshKey }) {
           </select>
         ))}
 
-        {config.mode === "collection" && <button onClick={() => setAddingKey(ROOT)}>+ Add</button>}
+        {config.mode === "collection" && <button onClick={() => {
+          if (currentAction && isFormDirty && !confirm("You have unsaved changes in the current form. Do you want to discard them?")) return;
+          setCurrentAction({ type: 'add', section: ROOT });
+        }}>+ Add</button>}
       </div>
     );
   };
@@ -270,7 +282,7 @@ export default function EntityManager({ config, refreshKey }) {
           onCancel={() => {}}
           onSave={async (updated) => {
             try {
-              const processed = await processItemWithFiles(updated, config, jwtToken);
+              const processed = await processItemWithFiles(updated, config, jwtToken, logout);
               await updateItem(null, processed);
             } catch (err) {
               console.error("Failed to save singleton item:", err);
@@ -289,15 +301,16 @@ export default function EntityManager({ config, refreshKey }) {
       <div className={styles.manager}>
         {renderControls()}
 
-        {addingKey === ROOT && (
+        {currentAction?.type === 'add' && currentAction.section === ROOT && (
           <EntityForm
             config={config}
-            onCancel={() => setAddingKey(null)}
+            onCancel={() => setCurrentAction(null)}
+            onDirtyChange={setIsFormDirty}
             onSave={async (item) => {
               try {
-                const processed = await processItemWithFiles(item, config, jwtToken);
+                const processed = await processItemWithFiles(item, config, jwtToken, logout);
                 await addItem(processed);
-                setAddingKey(null);
+                setCurrentAction(null);
               } catch (err) {
                 console.error("Failed to add item:", err);
               }
@@ -334,21 +347,25 @@ export default function EntityManager({ config, refreshKey }) {
             <div key={sec.key} className={styles.section}>
               <div className={styles.sectionTop}>
                 <h3>{sec.label}</h3>
-                {addingKey !== sec.key && (
-                  <button onClick={() => setAddingKey(sec.key)}>+ Add</button>
+                {!(currentAction?.type === 'add' && currentAction.section === sec.key) && (
+                  <button onClick={() => {
+                    if (currentAction && isFormDirty && !confirm("You have unsaved changes in the current form. Do you want to discard them?")) return;
+                    setCurrentAction({ type: 'add', section: sec.key });
+                  }}>+ Add</button>
                 )}
               </div>
 
-              {addingKey === sec.key && (
+              {currentAction?.type === 'add' && currentAction.section === sec.key && (
                 <div className={styles.sectionForm}>
                   <EntityForm
                     config={config}
-                    onCancel={() => setAddingKey(null)}
+                    onCancel={() => setCurrentAction(null)}
+                    onDirtyChange={setIsFormDirty}
                     onSave={async (item) => {
                       try {
-                        const processed = await processItemWithFiles(item, config, jwtToken);
+                        const processed = await processItemWithFiles(item, config, jwtToken, logout);
                         await addItem(processed, sec.key);
-                        setAddingKey(null);
+                        setCurrentAction(null);
                       } catch (err) {
                         console.error(`Failed to add item in section ${sec.key}:`, err);
                       }
