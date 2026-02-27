@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { validateFields } from "../../util/validators";
 import useCrud from "../../hooks/useCrud.jsx";
 import Loader from "../misc/loading.jsx";
@@ -17,35 +17,59 @@ export default function EntityForm({
       else if (
         f.type === "array" ||
         f.type === "multiSelect" ||
-        f.parse === "csv" ||
-        f.type === "sponsorTiers"
+        f.parse === "csv"
       ) {
-        // sponsorTiers is an object with four arrays
-        if (f.type === "sponsorTiers") {
-          defaults[f.name] = {
-            gold: [],
-            silver: [],
-            bronze: [],
-            partner: []
-          };
-        } else {
-          defaults[f.name] = [];
-        }
+        defaults[f.name] = [];
+      } else if (f.type === "sponsorTiers") {
+        // sponsorTiers is now an object with sponsor IDs as keys and tier as values
+        defaults[f.name] = {};
       } else defaults[f.name] = "";
     });
 
     return defaults;
   };
 
-  const [data, setData] = useState(() => ({
-    ...buildDefaults(),
-    ...initialData
-  }));
+  const convertSponsorsFormat = (sponsors) => {
+    if (!sponsors) return {};
+    
+    // If it's already in the new format (object with sponsor IDs as keys)
+    if (typeof sponsors === 'object' && !Array.isArray(sponsors) && 
+        Object.keys(sponsors).some(key => typeof sponsors[key] === 'string')) {
+      return sponsors;
+    }
+    
+    // Convert from old format (object with tier arrays) to new format
+    const converted = {};
+    if (sponsors.gold) sponsors.gold.forEach(id => converted[id] = 'gold');
+    if (sponsors.silver) sponsors.silver.forEach(id => converted[id] = 'silver');
+    if (sponsors.bronze) sponsors.bronze.forEach(id => converted[id] = 'bronze');
+    if (sponsors.partner) sponsors.partner.forEach(id => converted[id] = 'partner');
+    return converted;
+  };
 
-  const [originalData] = useState(() => ({
-    ...buildDefaults(),
-    ...initialData
-  }));
+  const [data, setData] = useState(() => {
+    const defaults = buildDefaults();
+    const merged = { ...defaults, ...initialData };
+    
+    // Convert sponsors format if needed
+    if (merged.sponsors) {
+      merged.sponsors = convertSponsorsFormat(merged.sponsors);
+    }
+    
+    return merged;
+  });
+
+  const [originalData] = useState(() => {
+    const defaults = buildDefaults();
+    const merged = { ...defaults, ...initialData };
+    
+    // Convert sponsors format if needed
+    if (merged.sponsors) {
+      merged.sponsors = convertSponsorsFormat(merged.sponsors);
+    }
+    
+    return merged;
+  });
 
   const [errors, setErrors] = useState({});
   const [fileUploads, setFileUploads] = useState({});
@@ -77,6 +101,25 @@ export default function EntityForm({
   const hasChanges =
     JSON.stringify(preparedData) !== JSON.stringify(originalData) ||
     Object.keys(fileUploads).length > 0;
+
+  // Prevent accidental navigation away with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasChanges) {
+        e.preventDefault();
+        e.returnValue = ''; // Chrome requires returnValue to be set
+        return ''; // Some browsers show this message
+      }
+    };
+
+    if (hasChanges) {
+      window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [hasChanges]);
 
   const submit = async () => {
     const { valid, errors: validationErrors } = validateFields(preparedData, config.validation);
@@ -306,44 +349,42 @@ export default function EntityForm({
 
           {f.type === "sponsorTiers" && (
             <div className={styles.sponsorTiers}>
-              {["gold", "silver", "bronze", "partner"].map(tier => (
-                <div key={tier} className={styles.tierRow}>
-                  <label>{tier.charAt(0).toUpperCase() + tier.slice(1)} Sponsors</label>
-                  <div className={styles.multiSelect}>
-                    {sponsorsData?.map(sponsor => {
-                      const selectedIds = data.sponsors?.[tier] || [];
-                      return (
-                        <button
-                          key={sponsor.id + tier}
-                          type="button"
-                          className={
-                            selectedIds.includes(sponsor.id)
-                              ? styles.selected
-                              : ""
-                          }
-                          onClick={() =>
-                            setData(prev => {
-                              const currentTier = prev.sponsors?.[tier] || [];
-                              const updatedTier = currentTier.includes(sponsor.id)
-                                ? currentTier.filter(id => id !== sponsor.id)
-                                : [...currentTier, sponsor.id];
-                              return {
-                                ...prev,
-                                sponsors: {
-                                  ...prev.sponsors,
-                                  [tier]: updatedTier
-                                }
-                              };
-                            })
-                          }
-                        >
-                          {sponsor.name}
-                        </button>
-                      );
-                    })}
-                  </div>
+              <div className={styles.legend}>
+                <span>Click to cycle sponsor tiers:</span>
+                <div className={styles.tierLegend}>
+                  <span className={styles.gold}>Gold</span>
+                  <span className={styles.silver}>Silver</span>
+                  <span className={styles.bronze}>Bronze</span>
+                  <span className={styles.partner}>Partner</span>
                 </div>
-              ))}
+              </div>
+              <div className={styles.multiSelect}>
+                {sponsorsData?.map(sponsor => {
+                  const currentTier = data.sponsors?.[sponsor.id] || "";
+                  const tiers = ["", "gold", "silver", "bronze", "partner"];
+                  const currentIndex = tiers.indexOf(currentTier);
+                  const nextTier = tiers[(currentIndex + 1) % tiers.length];
+                  
+                  return (
+                    <button
+                      key={sponsor.id}
+                      type="button"
+                      className={`${styles.tierButton} ${styles[currentTier] || ""}`}
+                      onClick={() =>
+                        setData(prev => ({
+                          ...prev,
+                          sponsors: {
+                            ...prev.sponsors,
+                            [sponsor.id]: nextTier
+                          }
+                        }))
+                      }
+                    >
+                      {sponsor.name} {currentTier && `(${currentTier})`}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 

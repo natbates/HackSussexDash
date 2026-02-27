@@ -37,7 +37,12 @@
   background-color: transparent;
   color: var(--text-colour);
   border: 1px solid var(--secondary-btn-border);
+}
 
+.field textarea {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  resize: vertical;
 }
 
 .error {
@@ -129,9 +134,81 @@
   gap: 1rem;
 }
 
-.tierRow {
+.legend {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.tierLegend {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.tierLegend span {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.tierLegend .gold {
+  background: #FFD700;
+  color: black;
+}
+
+.tierLegend .silver {
+  background: #C0C0C0;
+  color: black;
+}
+
+.tierLegend .bronze {
+  background: #CD7F32;
+  color: white;
+}
+
+.tierLegend .partner {
+  background: var(--accent-colour);
+  color: white;
+}
+
+.tierButton {
+  padding: 0.5rem;
+  border: 1px solid var(--secondary-btn-border);
+  background: transparent;
+  cursor: pointer;
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.tierButton.gold {
+  background: #FFD700;
+  color: black;
+  border-color: #FFD700;
+}
+
+.tierButton.silver {
+  background: #C0C0C0;
+  color: black;
+  border-color: #C0C0C0;
+}
+
+.tierButton.bronze {
+  background: #CD7F32;
+  color: white;
+  border-color: #CD7F32;
+}
+
+.tierButton.partner {
+  background: var(--accent-colour);
+  color: white;
+  border-color: var(--accent-colour);
+}
+
+.tierButton:hover {
+  opacity: 0.8;
 }
 
 .multiSelect button {
