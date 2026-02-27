@@ -85,6 +85,19 @@
   gap: 0.8rem;
 }
 
+.moveButton {
+  background: var(--accent-colour);
+  color: white;
+  border: 1px solid var(--accent-colour);
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.moveButton:hover {
+  background: var(--accent-colour-hover, #0056b3);
+}
+
 .add {
   margin-bottom: 0.5rem;
 }

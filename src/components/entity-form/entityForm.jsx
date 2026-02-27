@@ -136,26 +136,6 @@ export default function EntityForm({
     onCancel();
   };
 
-  const moveEvent = async (direction) => {
-    if (hasChanges && !window.confirm("You have unsaved changes. Moving will discard them. Continue?")) {
-      return;
-    }
-    
-    const newSection = direction === 'upcoming' ? 'upcomingEvents' : 'pastEvents';
-    
-    setSubmitting(true);
-    try {
-      await onSave({
-        ...preparedData,
-        ...(Object.keys(fileUploads).length > 0 ? { _files: fileUploads } : {}),
-        id: preparedData.id ?? crypto.randomUUID(),
-        _moveToSection: newSection
-      });
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const canSave = () => {
     return config.fields.every(f => {
       if (!f.required) return true;
@@ -374,28 +354,6 @@ export default function EntityForm({
       ))}
 
       <div className={styles.buttons}>
-        {isEditing && config.label?.toLowerCase().includes('event') && (
-          <>
-            {data.section === 'pastEvents' && (
-              <button 
-                onClick={() => moveEvent('upcoming')} 
-                disabled={submitting}
-                className={styles.moveButton}
-              >
-                Move to Upcoming
-              </button>
-            )}
-            {data.section === 'upcomingEvents' && (
-              <button 
-                onClick={() => moveEvent('past')} 
-                disabled={submitting}
-                className={styles.moveButton}
-              >
-                Move to Past
-              </button>
-            )}
-          </>
-        )}
         {(!isSingleton) && (
           <button onClick={handleCancel} disabled={submitting}>Cancel</button>
         )}

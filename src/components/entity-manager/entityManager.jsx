@@ -115,6 +115,17 @@ export default function EntityManager({ config, refreshKey }) {
     setVisibleCount((v) => ({ ...v, [key]: (v[key] ?? PAGE_SIZE) + PAGE_SIZE }));
   const showLess = (key) => setVisibleCount((v) => ({ ...v, [key]: PAGE_SIZE }));
 
+  const moveItem = async (item, fromSection, toSection) => {
+    try {
+      // Remove from current section
+      await deleteItem(item.id, fromSection);
+      // Add to new section
+      await addItem(item, toSection);
+    } catch (err) {
+      console.error("Failed to move item:", err);
+    }
+  };
+
 
   const renderRow = (item, section = null) => {
     if (!item) return null;
@@ -129,21 +140,7 @@ export default function EntityManager({ config, refreshKey }) {
             onSave={async (updated) => {
               try {
                 const processed = await processItemWithFiles(updated, config, jwtToken);
-                
-                // Handle moving between sections
-                if (processed._moveToSection) {
-                  const newSection = processed._moveToSection;
-                  delete processed._moveToSection;
-                  
-                  // Remove from current section
-                  await deleteItem(processed.id, editing.section);
-                  // Add to new section
-                  await addItem(processed, newSection);
-                } else {
-                  // Normal update
-                  await updateItem(processed.id, processed, editing.section);
-                }
-                
+                await updateItem(processed.id, processed, editing.section);
                 setEditing(null);
               } catch (err) {
                 console.error("Failed to save edited item:", err);
@@ -160,6 +157,22 @@ export default function EntityManager({ config, refreshKey }) {
           <strong>{item.name ?? item.title ?? "Untitled"}</strong>
           <span className={styles.line}></span>
           <div className={styles.actions}>
+            {config.label?.toLowerCase().includes('event') && section === 'pastEvents' && (
+              <button 
+                className={styles.moveButton}
+                onClick={() => moveItem(item, 'pastEvents', 'upcomingEvents')}
+              >
+                Move to Upcoming
+              </button>
+            )}
+            {config.label?.toLowerCase().includes('event') && section === 'upcomingEvents' && (
+              <button 
+                className={styles.moveButton}
+                onClick={() => moveItem(item, 'upcomingEvents', 'pastEvents')}
+              >
+                Move to Past
+              </button>
+            )}
             <button
               className="secondary"
               onClick={() => setEditing({ ...item, section })}

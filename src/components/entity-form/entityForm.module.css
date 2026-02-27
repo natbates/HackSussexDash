@@ -56,16 +56,6 @@
   cursor: pointer;
 }
 
-.moveButton {
-  background: var(--accent-colour);
-  color: white;
-  border: 1px solid var(--accent-colour);
-}
-
-.moveButton:hover {
-  background: var(--accent-colour-hover, #0056b3);
-}
-
 .singleton
 {
   border: none;
