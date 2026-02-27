@@ -24,6 +24,15 @@ export const handler = async (event) => {
         if (!path) return { statusCode: 400, body: "Missing 'path' in request" };
         if (!base64) return { statusCode: 400, body: "Missing 'base64' content in request" };
 
+        let content = base64;
+        if (base64.includes(',')) {
+            content = base64.split(',')[1];
+        }
+        if (!content) return { statusCode: 400, body: "Invalid base64 content" };
+
+        const decodedSize = content.length * 3 / 4;
+        if (decodedSize > 1000000) return { statusCode: 400, body: "File too large, max 1MB" };
+
         const repo = process.env.GITHUB_REPO;
         const token = process.env.GITHUB_SERVER_TOKEN;
 
@@ -34,7 +43,7 @@ export const handler = async (event) => {
             return { statusCode: 500, body: "Server misconfigured: missing repo or token" };
         }
 
-        const result = await writeFile(token, repo, path, base64);
+        const result = await writeFile(token, repo, path, content);
 
         console.log("writeFile result:", result);
 

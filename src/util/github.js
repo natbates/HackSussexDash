@@ -91,7 +91,7 @@ export async function writeFile(token, repo, path, base64Content) {
 
         const payload = {
             message: `${sha ? "Update" : "Create"} ${path}`,
-            content: base64Content.split(",")[1],
+            content: base64Content,
             sha: sha || undefined,
         };
 
