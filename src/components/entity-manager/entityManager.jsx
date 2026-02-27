@@ -129,7 +129,21 @@ export default function EntityManager({ config, refreshKey }) {
             onSave={async (updated) => {
               try {
                 const processed = await processItemWithFiles(updated, config, jwtToken);
-                await updateItem(processed.id, processed, editing.section);
+                
+                // Handle moving between sections
+                if (processed._moveToSection) {
+                  const newSection = processed._moveToSection;
+                  delete processed._moveToSection;
+                  
+                  // Remove from current section
+                  await deleteItem(processed.id, editing.section);
+                  // Add to new section
+                  await addItem(processed, newSection);
+                } else {
+                  // Normal update
+                  await updateItem(processed.id, processed, editing.section);
+                }
+                
                 setEditing(null);
               } catch (err) {
                 console.error("Failed to save edited item:", err);
