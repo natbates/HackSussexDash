@@ -16,50 +16,8 @@ const toBase64 = (file) =>
     reader.onerror = reject;
   });
 
-const processItemWithFiles = async (item, config, jwtToken, logout) => {
-  const processed = { ...item };
-
-  if (item._files && config?.imagePath) {
-    for (const [field, file] of Object.entries(item._files)) {
-      try {
-        const ext = file.name.split(".").pop();
-        const filename = crypto.randomUUID() + "." + ext;
-        const path = `${config.imagePath}/${filename}`;
-        const base64 = await toBase64(file);
-
-        const res = await fetch("/.netlify/functions/upload-file", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${jwtToken}`,
-          },
-          body: JSON.stringify({ path, base64 }),
-        });
-
-        if (res.status === 401) {
-          logout();
-          throw new Error("Session expired. Please log in again.");
-        }
-
-        const json = await res.json();
-        if (!res.ok || json.error) {
-          throw new Error(json.error || "Upload failed");
-        }
-
-        processed[field] = json.url; 
-      } catch (err) {
-        console.error(`Error processing file ${field}`, err);
-        throw err;
-      }
-    }
-  }
-
-  delete processed._files;
-  return processed;
-};
-
 export default function EntityManager({ config, refreshKey }) {
-  const { token: jwtToken } = useAuth();
+  const { token: jwtToken, logout } = useAuth();
   const { data, loading, addItem, updateItem, deleteItem, refetch, save } =
     useCrud(config?.file, refreshKey);
 
@@ -69,8 +27,47 @@ export default function EntityManager({ config, refreshKey }) {
   const [filters, setFilters] = useState({});
   const [visibleCount, setVisibleCount] = useState({});
 
-  if (loading) return <LoadingScreen message="Loading entities..." />;
-  if (!data) return <p>No data found.</p>;
+  const processItemWithFiles = async (item, config, jwtToken) => {
+    const processed = { ...item };
+
+    if (item._files && config?.imagePath) {
+      for (const [field, file] of Object.entries(item._files)) {
+        try {
+          const ext = file.name.split(".").pop();
+          const filename = crypto.randomUUID() + "." + ext;
+          const path = `${config.imagePath}/${filename}`;
+          const base64 = await toBase64(file);
+
+          const res = await fetch("/.netlify/functions/upload-file", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${jwtToken}`,
+            },
+            body: JSON.stringify({ path, base64 }),
+          });
+
+          if (res.status === 401) {
+            logout();
+            throw new Error("Session expired. Please log in again.");
+          }
+
+          const json = await res.json();
+          if (!res.ok || json.error) {
+            throw new Error(json.error || "Upload failed");
+          }
+
+          processed[field] = json.url; 
+        } catch (err) {
+          console.error(`Error processing file ${field}`, err);
+          throw err;
+        }
+      }
+    }
+
+    delete processed._files;
+    return processed;
+  };
 
 
   const matchesSearch = (item) => {
@@ -154,7 +151,7 @@ export default function EntityManager({ config, refreshKey }) {
             onDirtyChange={setIsFormDirty}
             onSave={async (updated) => {
               try {
-                const processed = await processItemWithFiles(updated, config, jwtToken, logout);
+                const processed = await processItemWithFiles(updated, config, jwtToken);
                 await updateItem(processed.id, processed, currentAction.item.section);
                 setCurrentAction(null);
               } catch (err) {
@@ -282,7 +279,7 @@ export default function EntityManager({ config, refreshKey }) {
           onCancel={() => {}}
           onSave={async (updated) => {
             try {
-              const processed = await processItemWithFiles(updated, config, jwtToken, logout);
+              const processed = await processItemWithFiles(updated, config, jwtToken);
               await updateItem(null, processed);
             } catch (err) {
               console.error("Failed to save singleton item:", err);
@@ -308,7 +305,7 @@ export default function EntityManager({ config, refreshKey }) {
             onDirtyChange={setIsFormDirty}
             onSave={async (item) => {
               try {
-                const processed = await processItemWithFiles(item, config, jwtToken, logout);
+                const processed = await processItemWithFiles(item, config, jwtToken);
                 await addItem(processed);
                 setCurrentAction(null);
               } catch (err) {
@@ -363,7 +360,7 @@ export default function EntityManager({ config, refreshKey }) {
                     onDirtyChange={setIsFormDirty}
                     onSave={async (item) => {
                       try {
-                        const processed = await processItemWithFiles(item, config, jwtToken, logout);
+                        const processed = await processItemWithFiles(item, config, jwtToken);
                         await addItem(processed, sec.key);
                         setCurrentAction(null);
                       } catch (err) {
