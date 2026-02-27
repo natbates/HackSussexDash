@@ -26,6 +26,17 @@ export default function EntityForm({
       } else defaults[f.name] = "";
     });
 
+    // Handle nested fields
+    if (config.nested) {
+      Object.entries(config.nested).forEach(([key, nestedConfig]) => {
+        if (nestedConfig.type === "repeatable") {
+          defaults[key] = [];
+        } else {
+          defaults[key] = "";
+        }
+      });
+    }
+
     return defaults;
   };
 
@@ -390,6 +401,253 @@ export default function EntityForm({
 
           {errors[f.name] && (
             <span className={styles.error}>{errors[f.name]}</span>
+          )}
+        </div>
+      ))}
+
+      {config.nested && Object.entries(config.nested).map(([key, nestedConfig]) => (
+        <div key={key} className={styles.field}>
+          <label>
+            {nestedConfig.label} {nestedConfig.required && <span className={styles.required}>*</span>}
+          </label>
+          
+          {nestedConfig.type === "repeatable" && (
+            <div className={styles.repeatableContainer}>
+              {(data[key] || []).map((item, index) => (
+                <div key={index} className={styles.repeatableItem}>
+                  <div className={styles.repeatableHeader}>
+                    <strong>{nestedConfig.label} {index + 1}</strong>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData(prev => ({
+                          ...prev,
+                          [key]: prev[key].filter((_, i) => i !== index)
+                        }));
+                      }}
+                      className={styles.removeBtn}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  
+                  {nestedConfig.fields.map(subField => (
+                    <div key={subField.name} className={styles.subField}>
+                      <label>
+                        {subField.label} {subField.required && <span className={styles.required}>*</span>}
+                      </label>
+                      
+                      {subField.type === "repeatable" ? (
+                        <div className={styles.repeatableSubContainer}>
+                          {(item[subField.name] || []).map((subItem, subIndex) => (
+                            <div key={subIndex} className={styles.repeatableSubItem}>
+                              <div className={styles.repeatableSubHeader}>
+                                <strong>{subField.label} {subIndex + 1}</strong>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setData(prev => {
+                                      const newData = { ...prev };
+                                      const parentArray = [...(newData[key] || [])];
+                                      const currentItem = { ...parentArray[index] };
+                                      currentItem[subField.name] = currentItem[subField.name].filter((_, i) => i !== subIndex);
+                                      parentArray[index] = currentItem;
+                                      newData[key] = parentArray;
+                                      return newData;
+                                    });
+                                  }}
+                                  className={styles.removeBtn}
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                              
+                              {subField.fields.map(subSubField => (
+                                <div key={subSubField.name}>
+                                  <label>
+                                    {subSubField.label} {subSubField.required && <span className={styles.required}>*</span>}
+                                  </label>
+                                  
+                                  {!subSubField.type && (
+                                    <input
+                                      type="text"
+                                      value={subItem[subSubField.name] || ""}
+                                      onChange={e => {
+                                        setData(prev => {
+                                          const newData = { ...prev };
+                                          const parentArray = [...(newData[key] || [])];
+                                          const currentItem = { ...parentArray[index] };
+                                          const subArray = [...(currentItem[subField.name] || [])];
+                                          subArray[subIndex] = { ...subArray[subIndex], [subSubField.name]: e.target.value };
+                                          currentItem[subField.name] = subArray;
+                                          parentArray[index] = currentItem;
+                                          newData[key] = parentArray;
+                                          return newData;
+                                        });
+                                      }}
+                                    />
+                                  )}
+                                  
+                                  {subSubField.type === "textarea" && (
+                                    <textarea
+                                      value={subItem[subSubField.name] || ""}
+                                      onChange={e => {
+                                        setData(prev => {
+                                          const newData = { ...prev };
+                                          const parentArray = [...(newData[key] || [])];
+                                          const currentItem = { ...parentArray[index] };
+                                          const subArray = [...(currentItem[subField.name] || [])];
+                                          subArray[subIndex] = { ...subArray[subIndex], [subSubField.name]: e.target.value };
+                                          currentItem[subField.name] = subArray;
+                                          parentArray[index] = currentItem;
+                                          newData[key] = parentArray;
+                                          return newData;
+                                        });
+                                      }}
+                                    />
+                                  )}
+                                </div>
+                              ))}
+                              
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setData(prev => {
+                                    const newData = { ...prev };
+                                    const parentArray = [...(newData[key] || [])];
+                                    const currentItem = { ...parentArray[index] };
+                                    const subArray = [...(currentItem[subField.name] || [])];
+                                    const newSubItem = {};
+                                    subField.fields.forEach(f => {
+                                      if (f.type === "boolean") newSubItem[f.name] = false;
+                                      else if (f.type === "array") newSubItem[f.name] = [];
+                                      else newSubItem[f.name] = "";
+                                    });
+                                    subArray.splice(subIndex + 1, 0, newSubItem);
+                                    currentItem[subField.name] = subArray;
+                                    parentArray[index] = currentItem;
+                                    newData[key] = parentArray;
+                                    return newData;
+                                  });
+                                }}
+                                className={styles.addBtn}
+                              >
+                                Add {subField.label.slice(0, -1)} After
+                              </button>
+                            </div>
+                          ))}
+                          
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setData(prev => {
+                                const newData = { ...prev };
+                                const parentArray = [...(newData[key] || [])];
+                                const currentItem = { ...parentArray[index] };
+                                const subArray = [...(currentItem[subField.name] || [])];
+                                const newSubItem = {};
+                                subField.fields.forEach(f => {
+                                  if (f.type === "boolean") newSubItem[f.name] = false;
+                                  else if (f.type === "array") newSubItem[f.name] = [];
+                                  else newSubItem[f.name] = "";
+                                });
+                                subArray.push(newSubItem);
+                                currentItem[subField.name] = subArray;
+                                parentArray[index] = currentItem;
+                                newData[key] = parentArray;
+                                return newData;
+                              });
+                            }}
+                            className={styles.addBtn}
+                          >
+                            Add {subField.label.slice(0, -1)}
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          {!subField.type && (
+                            <input
+                              type="text"
+                              value={item[subField.name] || ""}
+                              onChange={e => {
+                                setData(prev => {
+                                  const newData = { ...prev };
+                                  const parentArray = [...(newData[key] || [])];
+                                  parentArray[index] = { ...parentArray[index], [subField.name]: e.target.value };
+                                  newData[key] = parentArray;
+                                  return newData;
+                                });
+                              }}
+                            />
+                          )}
+                          
+                          {subField.type === "textarea" && (
+                            <textarea
+                              value={item[subField.name] || ""}
+                              onChange={e => {
+                                setData(prev => {
+                                  const newData = { ...prev };
+                                  const parentArray = [...(newData[key] || [])];
+                                  parentArray[index] = { ...parentArray[index], [subField.name]: e.target.value };
+                                  newData[key] = parentArray;
+                                  return newData;
+                                });
+                              }}
+                            />
+                          )}
+                        </>
+                      )}
+                    </div>
+                  ))}
+                  
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setData(prev => {
+                        const newData = { ...prev };
+                        const parentArray = [...(newData[key] || [])];
+                        const newItem = {};
+                        nestedConfig.fields.forEach(f => {
+                          if (f.type === "boolean") newItem[f.name] = false;
+                          else if (f.type === "array") newItem[f.name] = [];
+                          else if (f.type === "repeatable") newItem[f.name] = [];
+                          else newItem[f.name] = "";
+                        });
+                        parentArray.splice(index + 1, 0, newItem);
+                        newData[key] = parentArray;
+                        return newData;
+                      });
+                    }}
+                    className={styles.addBtn}
+                  >
+                    Add {nestedConfig.label.slice(0, -1)} After
+                  </button>
+                </div>
+              ))}
+              
+              <button
+                type="button"
+                onClick={() => {
+                  setData(prev => {
+                    const newData = { ...prev };
+                    const parentArray = [...(newData[key] || [])];
+                    const newItem = {};
+                    nestedConfig.fields.forEach(f => {
+                      if (f.type === "boolean") newItem[f.name] = false;
+                      else if (f.type === "array") newItem[f.name] = [];
+                      else if (f.type === "repeatable") newItem[f.name] = [];
+                      else newItem[f.name] = "";
+                    });
+                    parentArray.push(newItem);
+                    newData[key] = parentArray;
+                    return newData;
+                  });
+                }}
+                className={styles.addBtn}
+              >
+                Add {nestedConfig.label.slice(0, -1)}
+              </button>
+            </div>
           )}
         </div>
       ))}
