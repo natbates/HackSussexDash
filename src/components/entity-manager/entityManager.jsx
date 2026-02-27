@@ -65,7 +65,10 @@ export default function EntityManager({ config, refreshKey }) {
 
         if (!res.ok || json.error) {
           console.error("Upload failed:", json);
-    }
+          throw new Error(json.error || "Upload failed");
+        }
+
+        processed[field] = json.url;
 
     delete processed._files;
     return processed;
