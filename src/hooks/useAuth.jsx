@@ -3,12 +3,26 @@ import { jwtDecode } from "jwt-decode";
 
 const AuthContext = createContext();
 
+const isTokenExpired = (token) => {
+  try {
+    const decoded = jwtDecode(token);
+    const currentTime = Date.now() / 1000;
+    return decoded.exp < currentTime;
+  } catch {
+    return true;
+  }
+};
+
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(localStorage.getItem("gh_jwt"));
+  const storedToken = localStorage.getItem("gh_jwt");
+  const [token, setToken] = useState(storedToken && !isTokenExpired(storedToken) ? storedToken : null);
   const [user, setUser] = useState(token ? jwtDecode(token) : null);
   const [loading, setLoading] = useState(false);
 
   const login = async (jwt) => {
+    if (isTokenExpired(jwt)) {
+      return false;
+    }
     setToken(jwt);
     setUser(jwtDecode(jwt));
     localStorage.setItem("gh_jwt", jwt);
