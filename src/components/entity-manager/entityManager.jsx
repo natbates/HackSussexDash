@@ -47,22 +47,24 @@ export default function EntityManager({ config, refreshKey }) {
             body: JSON.stringify({ path, base64 }),
           });
 
-          if (res.status === 401) {
-            logout();
-            throw new Error("Session expired. Please log in again.");
-          }
+        console.log("Upload response status:", res.status);
 
-          const json = await res.json();
-          if (!res.ok || json.error) {
-            throw new Error(json.error || "Upload failed");
-          }
-
-          processed[field] = json.url; 
-        } catch (err) {
-          console.error(`Error processing file ${field}`, err);
-          throw err;
+        if (res.status === 401) {
+          logout();
+          throw new Error("Session expired. Please log in again.");
         }
-      }
+
+        let json;
+        try {
+          json = await res.json();
+        } catch (e) {
+          const text = await res.text();
+          console.error("Upload response not JSON:", text);
+          throw new Error(`Upload failed: ${res.status} ${res.statusText} - ${text}`);
+        }
+
+        if (!res.ok || json.error) {
+          console.error("Upload failed:", json);
     }
 
     delete processed._files;

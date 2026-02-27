@@ -27,12 +27,16 @@ export const handler = async (event) => {
         const repo = process.env.GITHUB_REPO;
         const token = process.env.GITHUB_SERVER_TOKEN;
 
+        console.log("Uploading file to repo:", repo, "path:", path);
+
         if (!repo || !token) {
             console.error("Server misconfigured: missing repo or token");
             return { statusCode: 500, body: "Server misconfigured: missing repo or token" };
         }
 
         const result = await writeFile(token, repo, path, base64);
+
+        console.log("writeFile result:", result);
 
         if (result.error) {
             console.error("GitHub write failed:", result.error);
