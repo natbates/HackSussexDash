@@ -19,6 +19,7 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     localStorage.removeItem("gh_jwt");
+    window.location.href = "/";
   };
 
   return (

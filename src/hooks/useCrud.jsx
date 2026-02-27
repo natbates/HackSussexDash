@@ -9,7 +9,10 @@ export default function useCrud(filePath, refreshKey = 0) {
   const { fetchWithAuth } = useApi();
 
   const fetchData = useCallback(async () => {
-    if (!filePath || !jwtToken) return;
+    if (!filePath || !jwtToken) {
+      setData(null);
+      return;
+    }
 
     setLoading(true);
 
