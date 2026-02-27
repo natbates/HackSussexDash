@@ -181,34 +181,36 @@
   cursor: pointer;
   color: white;
   transition: all 0.2s ease;
+  opacity: 0.8;
 }
 
 .tierButton.gold {
-  background: #FFD700;
+  background: #FFD700 !important;
   color: black;
   border-color: #FFD700;
 }
 
 .tierButton.silver {
-  background: #C0C0C0;
+  background: #C0C0C0 !important;
   color: black;
   border-color: #C0C0C0;
 }
 
 .tierButton.bronze {
-  background: #CD7F32;
+  background: #CD7F32 !important;
   color: white;
   border-color: #CD7F32;
 }
 
 .tierButton.partner {
-  background: var(--accent-colour);
+  background: var(--accent-colour) !important;
   color: white;
   border-color: var(--accent-colour);
 }
 
 .tierButton:hover {
-  opacity: 0.8;
+  opacity: 1;
+  background-color: transparent;
 }
 
 .multiSelect button {
@@ -221,10 +223,6 @@
 
 .multiSelect button:hover {
   color: white;
-}
-
-.multiSelect button.selected {
-  background: var(--accent-colour);
 }
 
 .loadingOverlay {
