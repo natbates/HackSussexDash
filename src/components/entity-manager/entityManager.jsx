@@ -72,8 +72,16 @@ export default function EntityManager({ config, refreshKey }) {
 
     delete processed._files;
     return processed;
+        }
+        catch (err) {
+          console.error("Failed to upload file for field", field, err)
+          throw new Error(`Failed to upload file for field ${field}: ${err.message}`)
+        }
+      }
+    
+    return processed;
+    }
   };
-
 
   const matchesSearch = (item) => {
     if (!search) return true;
