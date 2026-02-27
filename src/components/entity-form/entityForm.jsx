@@ -136,6 +136,24 @@ export default function EntityForm({
     onCancel();
   };
 
+  const moveEvent = async (newStatus) => {
+    if (hasChanges && !window.confirm("You have unsaved changes. Moving will discard them. Continue?")) {
+      return;
+    }
+    
+    setSubmitting(true);
+    try {
+      await onSave({
+        ...preparedData,
+        ...(Object.keys(fileUploads).length > 0 ? { _files: fileUploads } : {}),
+        id: preparedData.id ?? crypto.randomUUID(),
+        status: newStatus
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const canSave = () => {
     return config.fields.every(f => {
       if (!f.required) return true;
@@ -195,6 +213,7 @@ export default function EntityForm({
           {f.type === "textarea" && (
             <textarea
               value={data[f.name] ?? ""}
+              rows={config.label?.toLowerCase().includes('event') && f.name === 'description' ? 8 : undefined}
               onChange={e =>
                 setData({ ...data, [f.name]: e.target.value })
               }
@@ -353,6 +372,28 @@ export default function EntityForm({
       ))}
 
       <div className={styles.buttons}>
+        {isEditing && config.label?.toLowerCase().includes('event') && (
+          <>
+            {data.status === 'past' && (
+              <button 
+                onClick={() => moveEvent('upcoming')} 
+                disabled={submitting}
+                className={styles.moveButton}
+              >
+                Move to Upcoming
+              </button>
+            )}
+            {data.status === 'upcoming' && (
+              <button 
+                onClick={() => moveEvent('past')} 
+                disabled={submitting}
+                className={styles.moveButton}
+              >
+                Move to Past
+              </button>
+            )}
+          </>
+        )}
         {(!isSingleton) && (
           <button onClick={handleCancel} disabled={submitting}>Cancel</button>
         )}
