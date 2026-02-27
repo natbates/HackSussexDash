@@ -116,32 +116,11 @@ export default function EntityManager({ config, refreshKey }) {
   const showLess = (key) => setVisibleCount((v) => ({ ...v, [key]: PAGE_SIZE }));
 
   const moveItem = async (item, fromSection, toSection) => {
-    if (!data) return;
-    
     try {
-      // Perform both operations in a single save to avoid race conditions
-      const updatedData = {
-        ...data,
-        [fromSection]: data[fromSection].filter((i) => i.id !== item.id),
-        [toSection]: [...(data[toSection] || []), item]
-      };
-      
-      setData(updatedData);
-      
-      // Save to server
-      const res = await fetch("/.netlify/functions/write-json", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${jwtToken}`,
-        },
-        body: JSON.stringify({ path: config.file, data: updatedData }),
-      });
-
-      if (!res.ok) {
-        const result = await res.json();
-        throw new Error(result.error || "Failed to move item");
-      }
+      // Remove from current section first
+      await deleteItem(item.id, fromSection);
+      // Then add to new section
+      await addItem(item, toSection);
     } catch (err) {
       console.error("Failed to move item:", err);
       // Revert on error by refetching
